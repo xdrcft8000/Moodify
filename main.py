@@ -164,12 +164,13 @@ async def transcribe_audio(ogg_bytes: bytes) -> str:
     try:
         openai = init_openai()
         
-        # Use SpooledTemporaryFile to handle the bytes in memory until a certain size, then on disk
-        with tempfile.SpooledTemporaryFile(suffix=".ogg", max_size=10*1024*1024) as ogg_file:
-            ogg_file.write(ogg_bytes)
-            ogg_file.seek(0)  # Ensure we're at the start of the file
+        # Save the bytes to a temporary file
+        with tempfile.NamedTemporaryFile(suffix=".ogg", delete=False) as temp_file:
+            temp_file.write(ogg_bytes)
+            temp_file_path = temp_file.name
 
-            # Send the file-like object to the OpenAI API
+        # Open the file and send it to the OpenAI API
+        with open(temp_file_path, 'rb') as ogg_file:
             response = openai.audio.transcriptions.create(
                 model="whisper-1",
                 file=ogg_file,
@@ -177,10 +178,16 @@ async def transcribe_audio(ogg_bytes: bytes) -> str:
         
         print('transcription:', response.text)
         return response.text
-    
     except Exception as e:
         print("Error transcribing audio:", str(e))
         return None
+    finally:
+        if temp_file_path:
+            try:
+                os.remove(temp_file_path)
+            except OSError as cleanup_error:
+                print(f"Error cleaning up temporary file: {cleanup_error}")
+
 
 
 @app.get("/whatsapp/webhook")
