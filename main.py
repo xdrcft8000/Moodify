@@ -287,7 +287,7 @@ async def process_audio_message(message: Message, business_phone_number_id: str)
             await send_whatsapp_message(
                 business_phone_number_id=business_phone_number_id, 
                 recipient_number=message.from_,
-                message_text=text, 
+                message_text=f"I heard: \n{text}", 
                 context_message_id=message.id)
             
             await mark_message_as_read(
