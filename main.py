@@ -131,9 +131,7 @@ def convert_ogg_to_wav(ogg_data: bytes) -> BytesIO:
         audio = AudioSegment.from_file(BytesIO(ogg_data), format="ogg")
         wav_data = BytesIO()
         audio.export(wav_data, format="wav")
-        wav_data.seek(0)
         wav_bytes = wav_data.getvalue()
-
         return wav_bytes
     except Exception as e:
         print("Error converting OGG to WAV:", str(e))
