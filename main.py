@@ -111,6 +111,7 @@ from pydub import AudioSegment
 from io import BytesIO
 import io
 import tempfile
+import json
 
 
 WHATSAPP_WEBHOOK_VERIFY_TOKEN = os.getenv("WHATSAPP_WEBHOOK_VERIFY_TOKEN")
@@ -208,7 +209,9 @@ async def transcribe_audio(ogg_bytes: bytes) -> str:
 
         # Check for a successful response
         response.raise_for_status()
-        transcription_result = await response.json()
+        print(json.loads(response.text)["text"])
+
+        transcription_result = response.json()
         print('Transcription:', transcription_result)
         print('Transcription:', transcription_result.get('text'))
         return response.text
