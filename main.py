@@ -10,9 +10,6 @@ from fastapi.responses import JSONResponse, Response
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field, RootModel
 from supabase import create_client, Client
-url: str = os.environ.get("SUPABASE_URL")
-key: str = os.environ.get("SUPABASE_KEY")
-supabase: Client = create_client(url, key)
 
 class Text(BaseModel):
     body: str
@@ -68,6 +65,15 @@ class AnyRequestModel(RootModel[Dict[str, Any]]):
 
 app = FastAPI()
 
+# ++++++++++++++++++++++++++++++
+# ++++++++++ SUPABASE ++++++++++
+# ++++++++++++++++++++++++++++++
+
+url: str = os.environ.get("SUPABASE_URL")
+key: str = os.environ.get("SUPABASE_KEY")
+supabase: Client = create_client(url, key)
+
+
 @app.post('/db/insert')
 async def insert_data(request: Request):
     print('Inserting data')
@@ -110,7 +116,7 @@ WHATSAPP_GRAPH_API_TOKEN = os.getenv("WHATSAPP_GRAPH_API_TOKEN")
 
 
 def init_openai():
-    return OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    return OpenAI(api_key=os.getenv("OPENAI_KEY"))
 
 
 #  SPEECH TO TEXT:
