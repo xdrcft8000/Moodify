@@ -115,7 +115,7 @@ import tempfile
 
 WHATSAPP_WEBHOOK_VERIFY_TOKEN = os.getenv("WHATSAPP_WEBHOOK_VERIFY_TOKEN")
 WHATSAPP_GRAPH_API_TOKEN = os.getenv("WHATSAPP_GRAPH_API_TOKEN")
-
+OPENAI_KEY = os.getenv("OPENAI_KEY")
 
 def init_openai():
     return OpenAI(api_key=os.getenv("OPENAI_KEY"))
@@ -126,7 +126,6 @@ async def transcribe_audio(ogg_bytes: bytes) -> str:
     print('Transcribing audio')
 
     try:
-        openai_api_key = "your_openai_api_key"  # Replace with your actual API key
         url = "https://api.openai.com/v1/audio/transcriptions"
 
         # Create a BytesIO object from the binary data
@@ -140,7 +139,7 @@ async def transcribe_audio(ogg_bytes: bytes) -> str:
             'model': 'whisper-1'
         }
         headers = {
-            'Authorization': f'Bearer {openai_api_key}'
+            'Authorization': f'Bearer {OPENAI_KEY}'
         }
 
         # Make the request using httpx.AsyncClient
