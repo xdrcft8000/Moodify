@@ -238,17 +238,20 @@ async def verify_webhook(request: Request):
 async def process_text_message(message: Message, business_phone_number_id: str):
     print(f"Received message: {message.text.body}")
     prompt = message.text.body
+
+    default_message_template = "*Wagwaan family* 🤙🏾. Dr Singh wants 2 kno a bit about ur day and dat 😊 \n send a vn tho, i aint on dat reading ting 2daii. \n _+ dont make it longer than 2 mins tho man aint tryna hear a podcast._ \n I'm on dat polygot ting so any language is calm. \n \n bless up urself gstar \n -1- \n \n (powered by Moodify(?) n dat u know wat it is cmon.)"
+
     try:
-        flowise_response = await flowise_chatGPT(prompt)
+        # flowise_response = await flowise_chatGPT(prompt)
 
         # Prepare the message text to be sent as a reply
-        message_text = f"Here's a joke about '{message.text.body}': {flowise_response['text']}"
+        # message_text = f"Here's a joke about '{message.text.body}': {flowise_response['text']}"
 
         # Send a reply to the user
         await send_whatsapp_message(
             business_phone_number_id=business_phone_number_id,
             recipient_number=message.from_,
-            message_text=message_text,
+            message_text=default_message_template,
             context_message_id=message.id
         )
 
