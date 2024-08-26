@@ -132,7 +132,9 @@ def convert_ogg_to_wav(ogg_data: bytes) -> BytesIO:
         wav_data = BytesIO()
         audio.export(wav_data, format="wav")
         wav_data.seek(0)
-        return wav_data
+        wav_bytes = wav_data.getvalue()
+
+        return wav_bytes
     except Exception as e:
         print("Error converting OGG to WAV:", str(e))
         return None
@@ -160,15 +162,12 @@ async def transcribe_audio(ogg_file: bytes):
     print('Transcribing audio')
     try:
         openai = init_openai()
-        # wav_data = convert_ogg_to_wav(ogg_file)
-        if check_ogg_file(ogg_file):
-            response = openai.audio.transcriptions.create(
-                model="whisper-1",
-                file=BytesIO(ogg_file),
-                response_format="text"
-            )
-        else:
-            print("Invalid OGG file format")
+        wav_bytes = convert_ogg_to_wav(ogg_file)
+        response = openai.audio.transcriptions.create(
+            model="whisper-1",
+            file=wav_bytes,
+            response_format="text"
+        )
         print('transcription:', response.text)
         return response.text
     except Exception as e:
