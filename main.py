@@ -239,7 +239,7 @@ async def process_text_message(message: Message, business_phone_number_id: str):
     print(f"Received message: {message.text.body}")
     prompt = message.text.body
 
-    default_message_template = "*Wagwaan family* 🤙🏾. Dr Singh wants 2 kno a bit about ur day and dat 😊 \n send a vn tho, i aint on dat reading ting 2daii. \n _+ dont make it longer than 2 mins tho man aint tryna hear a podcast._ \n I'm on dat polygot ting so any language is calm. \n \n bless up urself gstar \n -1- \n \n (powered by Moodify(?) n dat u know wat it is cmon.)"
+    default_message_template = "*Wagwaan family* 🤙🏾\nDr Singh wants 2 kno a bit about ur day n dat 😊\n send a vn tho, i aint on dat reading ting 2dai u get it. \n \n _ But listen dont make it longer than 2 mins tho man aint tryna hear a podcast._ \n \nI'm on dat polygot ting so any language is calm. \n \n bless up urself gstar \n -1- \n \n*powered by Moodify(?) n dat u know wat it is cmon u kno the vibes.*"
 
     try:
         # flowise_response = await flowise_chatGPT(prompt)
