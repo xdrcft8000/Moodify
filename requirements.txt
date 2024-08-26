@@ -76,3 +76,4 @@ urllib3==2.2.2
 uvicorn==0.30.6
 websockets==12.0
 yarl==1.9.4
+ffmpeg-python
