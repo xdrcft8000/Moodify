@@ -110,6 +110,7 @@ from openai import OpenAI
 from pydub import AudioSegment
 from io import BytesIO
 import io
+import tempfile
 
 
 WHATSAPP_WEBHOOK_VERIFY_TOKEN = os.getenv("WHATSAPP_WEBHOOK_VERIFY_TOKEN")
@@ -124,18 +125,18 @@ def init_openai():
 # The best way to do this is to use a service that supports OGG
 # Current implementation is quicker but not the best way to do it
 
-def convert_ogg_to_wav(ogg_data: bytes) -> BytesIO:
-    print('Converting OGG to WAV')
-    try:
-        audio = AudioSegment.from_file(BytesIO(ogg_data), format="ogg")
-        wav_data = BytesIO()
-        audio.export(wav_data, format="wav")
-        wav_bytes = wav_data.getvalue()
-        print('WAV bytes:', wav_bytes)
-        return wav_bytes
-    except Exception as e:
-        print("Error converting OGG to WAV:", str(e))
-        return None
+# def convert_ogg_to_wav(ogg_data: bytes) -> BytesIO:
+#     print('Converting OGG to WAV')
+#     try:
+#         audio = AudioSegment.from_file(BytesIO(ogg_data), format="ogg")
+#         wav_data = BytesIO()
+#         audio.export(wav_data, format="wav")
+#         wav_bytes = wav_data.getvalue()
+#         print('WAV bytes:', wav_bytes)
+#         return wav_bytes
+#     except Exception as e:
+#         print("Error converting OGG to WAV:", str(e))
+#         return None
 
 # def check_ogg_file(ogg_data: bytes):
 #     print('Checking OGG file')
@@ -162,16 +163,30 @@ async def transcribe_audio(ogg_bytes: bytes) -> str:
 
     try:
         openai = init_openai()
-        ogg_file = io.BytesIO(ogg_bytes)
-        response = openai.audio.transcriptions.create(
-            model="whisper-1",
-            file=ogg_file,
-        )
+        
+        # Save the bytes to a temporary file
+        with tempfile.NamedTemporaryFile(suffix=".ogg", delete=False) as temp_file:
+            temp_file.write(ogg_bytes)
+            temp_file_path = temp_file.name
+
+        # Open the file and send it to the OpenAI API
+        with open(temp_file_path, 'rb') as ogg_file:
+            response = openai.audio.transcriptions.create(
+                model="whisper-1",
+                file=ogg_file,
+            )
+        
         print('transcription:', response.text)
         return response.text
     except Exception as e:
         print("Error transcribing audio:", str(e))
         return None
+    finally:
+        if temp_file_path:
+            try:
+                os.remove(temp_file_path)
+            except OSError as cleanup_error:
+                print(f"Error cleaning up temporary file: {cleanup_error}")
 
 
 
