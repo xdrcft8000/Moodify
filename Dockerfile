@@ -7,6 +7,7 @@ WORKDIR /app
 # Install system dependencies (if any, e.g., build-essential for some packages)
 RUN apt-get update && apt-get install -y \
     build-essential \
+    ffmpeg \
     && apt-get clean
 
 # Upgrade pip and setuptools to avoid potential issues with packages
