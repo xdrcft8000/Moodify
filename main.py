@@ -120,6 +120,66 @@ OPENAI_KEY = os.getenv("OPENAI_KEY")
 def init_openai():
     return OpenAI(api_key=os.getenv("OPENAI_KEY"))
 
+async def flowise_chatGPT(prompt: str) -> dict:
+    prompt = {"question": prompt}
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                "https://whatsappai-f2f3.onrender.com/api/v1/prediction/17bbeae4-f50b-43ca-8eb0-2aeea69d5359",
+                json=prompt,
+                headers={"Content-Type": "application/json"},
+            )
+            response.raise_for_status()
+            return response.json()
+    except httpx.HTTPStatusError as e:
+        print(f"Prediction service returned an error: {e.response.status_code}")
+        raise
+    except httpx.RequestError as e:
+        print(f"An error occurred while requesting the prediction service: {str(e)}")
+        raise
+
+
+
+async def send_whatsapp_message(business_phone_number_id: str, recipient_number, message_text, context_message_id = None):
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"https://graph.facebook.com/v18.0/{business_phone_number_id}/messages",
+                headers={"Authorization": f"Bearer {WHATSAPP_GRAPH_API_TOKEN}"},
+                json={
+                    "messaging_product": "whatsapp",
+                    "to": recipient_number,
+                    "text": {"body": message_text},
+                    **({"context": {"message_id": context_message_id}} if context_message_id else {})
+                    }
+            )
+            response.raise_for_status()
+    except httpx.HTTPStatusError as e:
+        print(f"Error sending WhatsApp message: {e.response.status_code}")
+        raise
+    except httpx.RequestError as e:
+        print(f"An error occurred while sending the WhatsApp message: {str(e)}")
+        raise
+
+async def mark_message_as_read(business_phone_number_id: str, message_id):
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"https://graph.facebook.com/v18.0/{business_phone_number_id}/messages",
+                headers={"Authorization": f"Bearer {WHATSAPP_GRAPH_API_TOKEN}"},
+                json={
+                    "messaging_product": "whatsapp",
+                    "status": "read",
+                    "message_id": message_id,
+                }
+            )
+            response.raise_for_status()
+    except httpx.HTTPStatusError as e:
+        print(f"Error marking message as read: {e.response.status_code}")
+        raise
+    except httpx.RequestError as e:
+        print(f"An error occurred while marking the message as read: {str(e)}")
+        raise
 
 # Send to OpenAI's API
 async def transcribe_audio(ogg_bytes: bytes) -> str:
@@ -149,7 +209,7 @@ async def transcribe_audio(ogg_bytes: bytes) -> str:
         # Check for a successful response
         response.raise_for_status()
 
-        print('Transcription:', response.text)
+        print('Transcription:', response.text["text"])
         return response.text
 
     except httpx.RequestError as e:
@@ -174,6 +234,69 @@ async def verify_webhook(request: Request):
         raise HTTPException(status_code=403, detail="Forbidden")
 
 
+async def process_text_message(message: Message, business_phone_number_id: str):
+    print(f"Received message: {message.text.body}")
+    prompt = message.text.body
+    try:
+        flowise_response = await flowise_chatGPT(prompt)
+
+        # Prepare the message text to be sent as a reply
+        message_text = f"Here's a joke about '{message.text.body}': {flowise_response['text']}"
+
+        # Send a reply to the user
+        await send_whatsapp_message(
+            business_phone_number_id=business_phone_number_id,
+            recipient_number=message.from_,
+            message_text=message_text,
+            context_message_id=message.id
+        )
+
+        # Mark the incoming message as read
+        await mark_message_as_read(
+            business_phone_number_id=business_phone_number_id,
+            message_id=message.id
+        )
+
+        return {"status": "success"}
+
+    except Exception as e:
+        print("Error processing the message:", str(e))
+        raise HTTPException(status_code=500, detail="Error processing the message")
+    
+
+async def process_audio_message(message: Message, business_phone_number_id: str):
+    print(f"Received audio message: {message.audio.id}")
+    try:
+        # Use an async client to make HTTP requests
+        async with httpx.AsyncClient() as client:
+            # Call to external service
+            response = await client.get(
+                f"https://graph.facebook.com/v20.0/{message.audio.id}/",
+                headers={"Authorization": f"Bearer {WHATSAPP_GRAPH_API_TOKEN}"},
+            )
+            audio_data = response.json()
+            audio_binary_data = await client.get(
+                audio_data['url'],
+                headers={"Authorization": f"Bearer {WHATSAPP_GRAPH_API_TOKEN}"},)
+            text = await transcribe_audio(audio_binary_data.content)
+            
+            await send_whatsapp_message(
+                business_phone_number_id=business_phone_number_id, 
+                recipient_number=message.from_,
+                message_text=text, 
+                context_message_id=message.id)
+            
+            await mark_message_as_read(
+                business_phone_number_id=business_phone_number_id,
+                message_id=message.id
+            )
+
+            return {"status": "success"}
+    except Exception as e:
+        print("Error querying the API:", str(e))
+        raise HTTPException(status_code=500, detail="Error getting media location")
+    
+
 @app.post("/whatsapp/webhook")
 async def webhook(body: WhatsAppWebhookBody):
     print('webhook post')
@@ -184,75 +307,14 @@ async def webhook(body: WhatsAppWebhookBody):
     except IndexError:
         raise HTTPException(status_code=400, detail="Invalid message structure")
 
+    business_phone_number_id = body.entry[0].changes[0].value.metadata.phone_number_id
+
     if message.type == "text":
-        business_phone_number_id = body.entry[0].changes[0].value.metadata.phone_number_id
-        prompt = {"question": message.text.body}
-        print(f"Received message: {message.text.body}")
-        try:
-            # Use an async client to make HTTP requests
-            async with httpx.AsyncClient() as client:
-                # Call to external service
-                response = await client.post(
-                    "https://whatsappai-f2f3.onrender.com/api/v1/prediction/17bbeae4-f50b-43ca-8eb0-2aeea69d5359",
-                    json=prompt,
-                    headers={"Content-Type": "application/json"},
-                )
-                flowise_data = response.json()
-                # Send a reply to the user
-                await client.post(
-                    f"https://graph.facebook.com/v18.0/{business_phone_number_id}/messages",
-                    headers={"Authorization": f"Bearer {WHATSAPP_GRAPH_API_TOKEN}"},
-                    json={
-                        "messaging_product": "whatsapp",
-                        "to": message.from_,
-                        "text": {"body": f"Here's a joke about '{message.text.body}': {flowise_data['text']}"},
-                        "context": {"message_id": message.id},
-                    }
-                )
-
-                # Mark the incoming message as read
-                await client.post(
-                    f"https://graph.facebook.com/v18.0/{business_phone_number_id}/messages",
-                    headers={"Authorization": f"Bearer {WHATSAPP_GRAPH_API_TOKEN}"},
-                    json={
-                        "messaging_product": "whatsapp",
-                        "status": "read",
-                        "message_id": message.id,
-                    }
-                )
-                return {"status": "success"}
-
-        except Exception as e:
-            print("Error querying the API:", str(e))
-            raise HTTPException(status_code=500, detail="Error querying the API")
+        print('Text message')
+        return await process_text_message(message, business_phone_number_id)
     elif message.type == "audio":
         print('Audio message')
-        print(message.audio.id)
-        print(message.audio.mime_type)
-        try:
-            # Use an async client to make HTTP requests
-            async with httpx.AsyncClient() as client:
-                # Call to external service
-                response = await client.get(
-                    f"https://graph.facebook.com/v20.0/{message.audio.id}/",
-                    headers={"Authorization": f"Bearer {WHATSAPP_GRAPH_API_TOKEN}"},
-                )
-                audio_data = response.json()
-                print(audio_data)
-                print(audio_data['url'])
-
-                audio_binary_data = await client.get(
-                    audio_data['url'],
-                    headers={"Authorization": f"Bearer {WHATSAPP_GRAPH_API_TOKEN}"},)
-                print('audio_binary_data:', audio_binary_data.headers)
-                print('audio_binary_data:', audio_binary_data)
-                text = await transcribe_audio(audio_binary_data.content)
-                print(text)
-                return {"status": "success"}
-        except Exception as e:
-            print("Error querying the API:", str(e))
-            raise HTTPException(status_code=500, detail="Error getting media location")
-
+        return await process_audio_message(message, business_phone_number_id)
 
     else:
         print('Message type:', message.type)
