@@ -209,12 +209,9 @@ async def transcribe_audio(ogg_bytes: bytes) -> str:
 
         # Check for a successful response
         response.raise_for_status()
-        print(json.loads(response.text)["text"])
 
         transcription_result = response.json()
-        print('Transcription:', transcription_result)
-        print('Transcription:', transcription_result.get('text'))
-        return response.text
+        return transcription_result.get('text')
 
     except httpx.RequestError as e:
         print(f"An error occurred while requesting {e.request.url!r}: {str(e)}")
