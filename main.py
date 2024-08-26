@@ -110,7 +110,6 @@ from openai import OpenAI
 from pydub import AudioSegment
 from io import BytesIO
 import io
-import ffmpeg
 
 
 WHATSAPP_WEBHOOK_VERIFY_TOKEN = os.getenv("WHATSAPP_WEBHOOK_VERIFY_TOKEN")
@@ -138,29 +137,29 @@ def convert_ogg_to_wav(ogg_data: bytes) -> BytesIO:
         print("Error converting OGG to WAV:", str(e))
         return None
 
-def check_ogg_file(ogg_data: bytes):
-    print('Checking OGG file')
-    try:
-        # Load the OGG file into a bytes stream
-        ogg_stream = io.BytesIO(ogg_data)
+# def check_ogg_file(ogg_data: bytes):
+#     print('Checking OGG file')
+#     try:
+#         # Load the OGG file into a bytes stream
+#         ogg_stream = io.BytesIO(ogg_data)
 
-        # Probe the file to get metadata
-        probe = ffmpeg.probe(ogg_stream)
+#         # Probe the file to get metadata
+#         probe = ffmpeg.probe(ogg_stream)
         
-        print("File format:", probe.get('format', {}).get('format_name'))
-        print("Duration:", probe.get('format', {}).get('duration'))
-        print("Bitrate:", probe.get('format', {}).get('bit_rate'))
+#         print("File format:", probe.get('format', {}).get('format_name'))
+#         print("Duration:", probe.get('format', {}).get('duration'))
+#         print("Bitrate:", probe.get('format', {}).get('bit_rate'))
 
-        return probe.get('format', {}).get('format_name') == 'ogg'
-    except ffmpeg.Error as e:
-        print("Error checking OGG file:", e)
-        return False
+#         return probe.get('format', {}).get('format_name') == 'ogg'
+#     except ffmpeg.Error as e:
+#         print("Error checking OGG file:", e)
+#         return False
 
 
 # Send to OpenAI's API
 async def transcribe_audio(ogg_file: bytes):
     print('Transcribing audio')
-    check_ogg_file(ogg_file)
+    # check_ogg_file(ogg_file)
     try:
         openai = init_openai()
         response = openai.audio.transcriptions.create(
