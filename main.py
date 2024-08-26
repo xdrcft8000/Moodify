@@ -208,8 +208,10 @@ async def transcribe_audio(ogg_bytes: bytes) -> str:
 
         # Check for a successful response
         response.raise_for_status()
-
-        print('Transcription:', response.text["text"])
+        print('Response:', response.get('text'))
+        transcription_result = await response.json()
+        print('Transcription:', transcription_result)
+        print('Transcription:', transcription_result.get('text'))
         return response.text
 
     except httpx.RequestError as e:
@@ -279,7 +281,7 @@ async def process_audio_message(message: Message, business_phone_number_id: str)
                 audio_data['url'],
                 headers={"Authorization": f"Bearer {WHATSAPP_GRAPH_API_TOKEN}"},)
             text = await transcribe_audio(audio_binary_data.content)
-            
+
             await send_whatsapp_message(
                 business_phone_number_id=business_phone_number_id, 
                 recipient_number=message.from_,
