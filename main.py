@@ -208,7 +208,6 @@ async def transcribe_audio(ogg_bytes: bytes) -> str:
 
         # Check for a successful response
         response.raise_for_status()
-        print('Response:', response.get('text'))
         transcription_result = await response.json()
         print('Transcription:', transcription_result)
         print('Transcription:', transcription_result.get('text'))
