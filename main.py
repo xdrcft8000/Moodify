@@ -162,7 +162,7 @@ async def transcribe_audio(ogg_bytes: bytes) -> str:
 
     try:
         openai = init_openai()
-        ogg_file = io.BytesIO(ogg_file)
+        ogg_file = io.BytesIO(ogg_bytes)
         response = openai.audio.transcriptions.create(
             model="whisper-1",
             file=ogg_file,
