@@ -121,73 +121,44 @@ def init_openai():
     return OpenAI(api_key=os.getenv("OPENAI_KEY"))
 
 
-#  SPEECH TO TEXT:
-# The best way to do this is to use a service that supports OGG
-# Current implementation is quicker but not the best way to do it
-
-# def convert_ogg_to_wav(ogg_data: bytes) -> BytesIO:
-#     print('Converting OGG to WAV')
-#     try:
-#         audio = AudioSegment.from_file(BytesIO(ogg_data), format="ogg")
-#         wav_data = BytesIO()
-#         audio.export(wav_data, format="wav")
-#         wav_bytes = wav_data.getvalue()
-#         print('WAV bytes:', wav_bytes)
-#         return wav_bytes
-#     except Exception as e:
-#         print("Error converting OGG to WAV:", str(e))
-#         return None
-
-# def check_ogg_file(ogg_data: bytes):
-#     print('Checking OGG file')
-#     try:
-#         # Load the OGG file into a bytes stream
-#         ogg_stream = io.BytesIO(ogg_data)
-
-#         # Probe the file to get metadata
-#         probe = ffmpeg.probe(ogg_stream)
-        
-#         print("File format:", probe.get('format', {}).get('format_name'))
-#         print("Duration:", probe.get('format', {}).get('duration'))
-#         print("Bitrate:", probe.get('format', {}).get('bit_rate'))
-
-#         return probe.get('format', {}).get('format_name') == 'ogg'
-#     except ffmpeg.Error as e:
-#         print("Error checking OGG file:", e)
-#         return False
-
-
 # Send to OpenAI's API
 async def transcribe_audio(ogg_bytes: bytes) -> str:
     print('Transcribing audio')
 
     try:
-        openai = init_openai()
-        
-        # Save the bytes to a temporary file
-        with tempfile.NamedTemporaryFile(suffix=".ogg", delete=False) as temp_file:
-            temp_file.write(ogg_bytes)
-            temp_file_path = temp_file.name
+        openai_api_key = "your_openai_api_key"  # Replace with your actual API key
+        url = "https://api.openai.com/v1/audio/transcriptions"
 
-        # Open the file and send it to the OpenAI API
-        with open(temp_file_path, 'rb') as ogg_file:
-            response = openai.audio.transcriptions.create(
-                model="whisper-1",
-                file=ogg_file,
-            )
-        
-        print('transcription:', response.text)
+        # Create a BytesIO object from the binary data
+        ogg_file = io.BytesIO(ogg_bytes)
+
+        # Construct the multipart/form-data payload
+        files = {
+            'file': ('audio.ogg', ogg_file, 'audio/ogg')
+        }
+        data = {
+            'model': 'whisper-1'
+        }
+        headers = {
+            'Authorization': f'Bearer {openai_api_key}'
+        }
+
+        # Make the request using httpx.AsyncClient
+        async with httpx.AsyncClient() as client:
+            response = await client.post(url, files=files, data=data, headers=headers)
+
+        # Check for a successful response
+        response.raise_for_status()
+
+        print('Transcription:', response.text)
         return response.text
-    except Exception as e:
-        print("Error transcribing audio:", str(e))
-        return None
-    finally:
-        if temp_file_path:
-            try:
-                os.remove(temp_file_path)
-            except OSError as cleanup_error:
-                print(f"Error cleaning up temporary file: {cleanup_error}")
 
+    except httpx.RequestError as e:
+        print(f"An error occurred while requesting {e.request.url!r}: {str(e)}")
+        return None
+    except httpx.HTTPStatusError as e:
+        print(f"Error response {e.response.status_code} while requesting {e.request.url!r}: {str(e)}")
+        return None
 
 
 @app.get("/whatsapp/webhook")
