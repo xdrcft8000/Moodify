@@ -12,15 +12,17 @@ RUN apt-get update && apt-get install -y \
 # Upgrade pip and setuptools to avoid potential issues with packages
 RUN pip install --upgrade pip setuptools
 
+# Copy the requirements file from the root directory of your project to the working directory in the container
+COPY requirements.txt /app/requirements.txt
+
 # Create a virtual environment
 RUN python -m venv /app/venv
 
 # Activate the virtual environment and install dependencies
-# The `source` command is executed in a single RUN statement to maintain the environment
-RUN /bin/bash -c "source /app/venv/bin/activate && pip install --no-cache-dir -r requirements.txt"
+RUN /bin/bash -c "source /app/venv/bin/activate && pip install --no-cache-dir -r /app/requirements.txt"
 
-# Copy the rest of the application code
-COPY . .
+# Copy the rest of the application code to the working directory
+COPY . /app
 
 # Set environment variables to use the virtual environment by default
 ENV PATH="/app/venv/bin:$PATH"
