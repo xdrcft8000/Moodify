@@ -105,12 +105,12 @@ from pydub import AudioSegment
 from io import BytesIO
 
 
-MOODIFY_WEBHOOK_VERIFY_TOKEN = os.getenv("MOODIFY_WEBHOOK_VERIFY_TOKEN")
-MOODIFY_WHATSAPP_GRAPH_API_TOKEN = os.getenv("MOODIFY_WHATSAPP_GRAPH_API_TOKEN")
+WHATSAPP_WEBHOOK_VERIFY_TOKEN = os.getenv("WHATSAPP_WEBHOOK_VERIFY_TOKEN")
+WHATSAPP_GRAPH_API_TOKEN = os.getenv("WHATSAPP_GRAPH_API_TOKEN")
 
 
 def init_openai():
-    return OpenAI(os.getenv("MOODIFY_OPENAI_API_KEY"))
+    return OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
 #  SPEECH TO TEXT:
@@ -148,13 +148,13 @@ async def transcribe_audio(ogg_file: bytes):
 
 
 
-@app.get("/moodify/whatsapp/webhook")
+@app.get("/whatsapp/webhook")
 async def verify_webhook(request: Request):
     mode = request.query_params.get("hub.mode")
     token = request.query_params.get("hub.verify_token")
     challenge = request.query_params.get("hub.challenge")
 
-    if mode == "subscribe" and token == MOODIFY_WEBHOOK_VERIFY_TOKEN:
+    if mode == "subscribe" and token == WHATSAPP_WEBHOOK_VERIFY_TOKEN:
         print("Webhook verified successfully!")
         res = Response(content=challenge, media_type="text/plain")
         return res
@@ -162,7 +162,7 @@ async def verify_webhook(request: Request):
         raise HTTPException(status_code=403, detail="Forbidden")
 
 
-@app.post("/moodify/whatsapp/webhook")
+@app.post("/whatsapp/webhook")
 async def webhook(body: WhatsAppWebhookBody):
     print('webhook post')
     # Attempt to read the Request
@@ -189,7 +189,7 @@ async def webhook(body: WhatsAppWebhookBody):
                 # Send a reply to the user
                 await client.post(
                     f"https://graph.facebook.com/v18.0/{business_phone_number_id}/messages",
-                    headers={"Authorization": f"Bearer {MOODIFY_WHATSAPP_GRAPH_API_TOKEN}"},
+                    headers={"Authorization": f"Bearer {WHATSAPP_GRAPH_API_TOKEN}"},
                     json={
                         "messaging_product": "whatsapp",
                         "to": message.from_,
@@ -201,7 +201,7 @@ async def webhook(body: WhatsAppWebhookBody):
                 # Mark the incoming message as read
                 await client.post(
                     f"https://graph.facebook.com/v18.0/{business_phone_number_id}/messages",
-                    headers={"Authorization": f"Bearer {MOODIFY_WHATSAPP_GRAPH_API_TOKEN}"},
+                    headers={"Authorization": f"Bearer {WHATSAPP_GRAPH_API_TOKEN}"},
                     json={
                         "messaging_product": "whatsapp",
                         "status": "read",
@@ -223,7 +223,7 @@ async def webhook(body: WhatsAppWebhookBody):
                 # Call to external service
                 response = await client.get(
                     f"https://graph.facebook.com/v20.0/{message.audio.id}/",
-                    headers={"Authorization": f"Bearer {MOODIFY_WHATSAPP_GRAPH_API_TOKEN}"},
+                    headers={"Authorization": f"Bearer {WHATSAPP_GRAPH_API_TOKEN}"},
                 )
                 audio_data = response.json()
                 print(audio_data)
@@ -231,7 +231,7 @@ async def webhook(body: WhatsAppWebhookBody):
 
                 audio_binary_data = await client.get(
                     audio_data['url'],
-                    headers={"Authorization": f"Bearer {MOODIFY_WHATSAPP_GRAPH_API_TOKEN}"},)
+                    headers={"Authorization": f"Bearer {WHATSAPP_GRAPH_API_TOKEN}"},)
                 print('audio_binary_data:', audio_binary_data.headers)
                 print('audio_binary_data:', audio_binary_data)
                 text = await transcribe_audio(audio_binary_data.content)
