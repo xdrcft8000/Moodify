@@ -165,17 +165,13 @@ async def transcribe_audio(ogg_bytes: bytes) -> str:
         openai = init_openai()
         
         # Save the bytes to a temporary file
-        with tempfile.NamedTemporaryFile(suffix=".ogg", delete=False) as temp_file:
-            temp_file.write(ogg_bytes)
-            temp_file_path = temp_file.name
-
-        # Open the file and send it to the OpenAI API
-        with open(temp_file_path, 'rb') as ogg_file:
+        with tempfile.SpooledTemporaryFile(suffix=".ogg", max_size=10*1024*1024) as ogg_file:   
+            ogg_file.write(ogg_bytes)
+            ogg_file.seek(0)
             response = openai.audio.transcriptions.create(
                 model="whisper-1",
                 file=ogg_file,
-            )
-        
+            )        
         print('transcription:', response.text)
         return response.text
     except Exception as e:
