@@ -1,7 +1,7 @@
 import asyncio
 from fastapi import FastAPI, HTTPException, Depends
 from sqlalchemy.orm import Session
-import datetime
+from datetime import datetime, timezone
 from fastapi import FastAPI, Header, Request, HTTPException, Query
 import httpx
 import os
@@ -53,7 +53,7 @@ def create_new_patient(patient: PatientCreateRequest,  db: Session = Depends(get
         assigned_to=patient.assigned_to,
         phone_number=patient.phone_number,
         email=patient.email,
-        created_at=datetime.utcnow()
+        created_at=datetime.now(timezone.utc)
     )
     
     # Add the new patient to the session and commit
@@ -76,7 +76,7 @@ def create_new_user(user: UserCreateRequest, db: Session = Depends(get_db)):
         last_name=user.last_name,
         title=user.title,
         email=user.email,
-        created_at=datetime.utcnow()
+        created_at= datetime.now(timezone.utc)
     )
     
     try:
@@ -95,7 +95,7 @@ def create_new_template(template: TemplateCreateRequest, db: Session = Depends(g
         duration=template.duration,
         questions=template.questions,
         title=template.title,
-        created_at=datetime.utcnow()
+        created_at=datetime.now(timezone.utc)
     )
     
     try:
@@ -127,7 +127,7 @@ def create_new_questionnaire(patient_id, template_id, user_id, questions, curren
             user_id=user_id,
             questions=json.dumps(questions),
             current_status=current_status,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         
         db.add(new_questionnaire)
@@ -144,7 +144,7 @@ def create_new_conversation(patient_id: int, user_id: int, status: str, question
     new_conversation = Conversation(
         patient_id=patient_id,
         user_id=user_id,
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
         ended_at=None,
         status=status,
         questionnaire_id=questionnaire_id
@@ -165,7 +165,7 @@ def log_chat_message(conversation_id: int, patient_id: int, message: str, role: 
         message_text=message,
         patient_id=patient_id,
         conversation_id=conversation_id,
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
         role=role
     )
     
