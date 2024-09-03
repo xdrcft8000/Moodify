@@ -103,26 +103,46 @@ Base = declarative_base(metadata=metadata)
 
 # Example of accessing a table
 class User(Base):
-    __table__ = metadata.tables['Users']  # Replace 'users' with your table name
+    __table__ = metadata.tables['Users'] 
 
 class Patient(Base):
-    __table__ = metadata.tables['Patients']  # Replace 'patients' with your table name
+    __table__ = metadata.tables['Patients'] 
 
 class Template(Base):
-    __table__ = metadata.tables['Templates']  # Replace 'templates' with your table name
+    __table__ = metadata.tables['Templates'] 
 
 class Questionnaire(Base):
-    __table__ = metadata.tables['Questionnaires']  # Replace 'questionnaires' with your table name
+    __table__ = metadata.tables['Questionnaires']  
 
 class ChatLogMessage(Base):
-    __table__ = metadata.tables['Chat_logs']  # Replace 'chat_logs' with your table name
+    __table__ = metadata.tables['Chat_logs'] 
 
 class Conversation(Base):
-    __table__ = metadata.tables['Conversations']  # Replace 'conversations' with your table name
+    __table__ = metadata.tables['Conversations']  
 
 
 SessionLocal = sessionmaker(bind=engine)
 
-# Now you can interact with the 'User' model like any other SQLAlchemy model
 
 
+from sqlalchemy import inspect
+
+def print_table_info():
+    # List of your model classes
+    models = [User, Patient, Template, Questionnaire, ChatLogMessage, Conversation]
+
+    for model in models:
+        print(f"Table: {model.__tablename__}")
+        print("-" * 50)
+
+        # Using SQLAlchemy's inspector to get details about the table
+        table = model.__table__
+
+        # Print the columns
+        for column in table.columns:
+            print(f"Column: {column.name} | Type: {column.type} | Primary Key: {column.primary_key}")
+
+        print("\n")  # Add a line break after each table
+
+# Call the function to print the table information
+print_table_info()
