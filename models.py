@@ -123,26 +123,3 @@ class Conversation(Base):
 
 SessionLocal = sessionmaker(bind=engine)
 
-
-
-from sqlalchemy import inspect
-
-def print_table_info():
-    # List of your model classes
-    models = [User, Patient, Template, Questionnaire, ChatLogMessage, Conversation]
-
-    for model in models:
-        print(f"Table: {model.__tablename__}")
-        print("-" * 50)
-
-        # Using SQLAlchemy's inspector to get details about the table
-        table = model.__table__
-
-        # Print the columns
-        for column in table.columns:
-            print(f"Column: {column.name} | Type: {column.type} | Primary Key: {column.primary_key}")
-
-        print("\n")  # Add a line break after each table
-
-# Call the function to print the table information
-print_table_info()
