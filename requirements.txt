@@ -77,3 +77,6 @@ uvicorn==0.30.6
 websockets==12.0
 yarl==1.9.4
 ffmpeg-python
+sqlalchemy==2.0.32
+sqlmodel==0.0.22
+sqlacodegen==2.3.0
