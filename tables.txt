@@ -1,0 +1,61 @@
+Table: Users
+--------------------------------------------------
+Column: id | Type: BIGINT | Primary Key: True
+Column: created_at | Type: TIMESTAMP | Primary Key: False
+Column: first_name | Type: VARCHAR | Primary Key: False
+Column: last_name | Type: VARCHAR | Primary Key: False
+Column: title | Type: VARCHAR | Primary Key: False
+Column: email | Type: VARCHAR | Primary Key: False
+
+
+Table: Patients
+--------------------------------------------------
+Column: id | Type: BIGINT | Primary Key: True
+Column: created_at | Type: TIMESTAMP | Primary Key: False
+Column: first_name | Type: VARCHAR | Primary Key: False
+Column: last_name | Type: VARCHAR | Primary Key: False
+Column: is_guardian | Type: BOOLEAN | Primary Key: False
+Column: assigned_to | Type: BIGINT | Primary Key: False
+Column: phone_number | Type: VARCHAR | Primary Key: False
+Column: email | Type: VARCHAR | Primary Key: False
+
+
+Table: Templates
+--------------------------------------------------
+Column: id | Type: BIGINT | Primary Key: True
+Column: created_at | Type: TIMESTAMP | Primary Key: False
+Column: owner | Type: BIGINT | Primary Key: False
+Column: duration | Type: TEXT | Primary Key: False
+Column: questions | Type: JSONB | Primary Key: False
+Column: title | Type: TEXT | Primary Key: False
+
+
+Table: Questionnaires
+--------------------------------------------------
+Column: id | Type: BIGINT | Primary Key: True
+Column: created_at | Type: TIMESTAMP | Primary Key: False
+Column: patient_id | Type: BIGINT | Primary Key: False
+Column: template_id | Type: BIGINT | Primary Key: False
+Column: user_id | Type: BIGINT | Primary Key: False
+Column: questions | Type: JSON | Primary Key: False
+Column: current_status | Type: VARCHAR | Primary Key: False
+
+
+Table: Chat_logs
+--------------------------------------------------
+Column: id | Type: BIGINT | Primary Key: True
+Column: created_at | Type: TIMESTAMP | Primary Key: False
+Column: role | Type: TEXT | Primary Key: False
+Column: patient_id | Type: BIGINT | Primary Key: False
+Column: message_text | Type: TEXT | Primary Key: False
+Column: conversation_id | Type: BIGINT | Primary Key: False
+
+
+Table: Conversations
+--------------------------------------------------
+Column: id | Type: BIGINT | Primary Key: True
+Column: created_at | Type: TIMESTAMP | Primary Key: False
+Column: start_time | Type: TIMESTAMP | Primary Key: False
+Column: end_time | Type: TIMESTAMP | Primary Key: False
+Column: questionnaire_id | Type: BIGINT | Primary Key: False
+Column: status | Type: TEXT | Primary Key: False

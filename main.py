@@ -38,6 +38,12 @@ def get_db():
         db.close()
 
 
+@app.get("/db/table_info")
+def table_info_endpoint(db: Session = Depends(get_db)):
+    table_info = get_table_info(db)
+    return {"status": "success", "data": table_info}
+
+
 # Endpoint to create a new patient
 @app.post("/db/new_patient")
 def create_new_patient(patient: PatientCreateRequest,  db: Session = Depends(get_db)):

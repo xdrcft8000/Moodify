@@ -1,7 +1,7 @@
 import os
 from pydantic import BaseModel, Field, RootModel, EmailStr
 from typing import List, Optional, Dict, Any
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.orm import declarative_base, sessionmaker, Session
 
 
 #PYDANTIC MODELS
@@ -89,6 +89,9 @@ class AnyRequestModel(RootModel[Dict[str, Any]]):
 
 from sqlalchemy import create_engine, MetaData, Table
 from sqlalchemy.orm import declarative_base
+# from dotenv import load_dotenv
+# load_dotenv()
+
 
 # Connect to your PostgreSQL database
 DATABASE_URL = os.environ.get('DATABASE_URL')
@@ -123,3 +126,27 @@ class Conversation(Base):
 
 SessionLocal = sessionmaker(bind=engine)
 
+def get_table_info(db: Session) -> List[Dict[str, Any]]:
+    table_info = []
+    models = [User, Patient, Template, Questionnaire, ChatLogMessage, Conversation]
+
+    for model in models:
+        table_details = {
+            "table_name": model.__table__.name,
+            "columns": []
+        }
+
+        table = model.__table__
+        for column in table.columns:
+            column_info = {
+                "name": column.name,
+                "type": str(column.type),
+                "primary_key": column.primary_key
+            }
+            table_details["columns"].append(column_info)
+
+        table_info.append(table_details)
+
+    return table_info
+
+# Call the function to print the table information
