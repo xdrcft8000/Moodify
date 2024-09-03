@@ -50,7 +50,6 @@ def create_new_patient(patient: PatientCreateRequest,  db: Session = Depends(get
     new_patient = Patient(
         first_name=patient.first_name,
         last_name=patient.last_name,
-        is_guardian=patient.is_guardian,
         assigned_to=patient.assigned_to,
         phone_number=patient.phone_number,
         email=patient.email,
@@ -109,25 +108,25 @@ def create_new_template(template: TemplateCreateRequest, db: Session = Depends(g
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@app.post("/db/new_questionnaire/")
-def create_new_questionnaire(template: QuestionnaireCreateRequest, db: Session = Depends(get_db)):
+def create_new_questionnaire(patient_id, template_id, user_id, questions, current_status, db: Session = Depends(get_db)):
     try:
         # Fetch the template from the database
-        template_instance = db.query(Template).filter(Template.id == template.template_id).first()
+        template_instance = db.query(Template).filter(Template.id == template_id).first()
         if not template_instance:
+            print("ERROR: Template not found")
             raise HTTPException(status_code=404, detail="Template not found")
 
         # Process questions
         questions = json.loads(template_instance.questions)
         for key in questions:
-            questions[key]['response'] = template.questions.get(key)
+            questions[key]['response'] = questions.get(key)
 
         new_questionnaire = Questionnaire(
-            patient_id=template.patient_id,
-            template_id=template.template_id,
-            user_id=template.user_id,
+            patient_id=patient_id,
+            template_id=template_id,
+            user_id=user_id,
             questions=json.dumps(questions),
-            current_status=template.current_status,
+            current_status=current_status,
             created_at=datetime.utcnow()
         )
         

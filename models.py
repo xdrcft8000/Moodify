@@ -56,7 +56,6 @@ class WhatsAppWebhookBody(BaseModel):
 class PatientCreateRequest(BaseModel):
     first_name: str
     last_name: str
-    is_guardian: bool
     assigned_to: Optional[int] = None
     phone_number: str
     email: EmailStr
