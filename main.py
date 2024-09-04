@@ -185,7 +185,7 @@ def init_openai():
     return OpenAI(api_key=os.getenv("OPENAI_KEY"))
 
 
-
+#Called when a message or update is received from WhatsApp
 @app.post("/whatsapp/webhook")
 async def webhook(body: WhatsAppWebhookBody):
     print('webhook post')
@@ -212,6 +212,7 @@ async def webhook(body: WhatsAppWebhookBody):
     return {"status": "success"}
 
 
+#Inital route that verifies the webhook
 @app.get("/whatsapp/webhook")
 async def verify_webhook(request: Request):
     mode = request.query_params.get("hub.mode")
@@ -226,7 +227,7 @@ async def verify_webhook(request: Request):
         raise HTTPException(status_code=403, detail="Forbidden")
 
 
-async def send_whatsapp_message(business_phone_number_id: str, recipient_number, message_text, context_message_id = None):
+async def send_whatsapp_message(business_phone_number_id: str, recipient_number, message_text, context_message_id = None, logging = True):
     try:
         async with httpx.AsyncClient() as client:
             response = await client.post(
@@ -246,6 +247,8 @@ async def send_whatsapp_message(business_phone_number_id: str, recipient_number,
     except httpx.RequestError as e:
         print(f"An error occurred while sending the WhatsApp message: {str(e)}")
         raise
+
+
 
 async def send_whatsapp_begin_questionnaire_template(patient_id, conversation_id, duration,db: Session):
     
@@ -300,7 +303,7 @@ async def send_whatsapp_begin_questionnaire_template(patient_id, conversation_id
                 }
             )
             response.raise_for_status()
-            log_chat_message(conversation_id, patient_id, f"Template:{"begin_questionnaire"}", "system")
+            log_chat_message(conversation_id, patient_id, "Template: begin_questionnaire", "system")
     except httpx.HTTPStatusError as e:
         print(f"Error sending WhatsApp template message: {e.response.status_code}")
         raise
