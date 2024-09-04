@@ -207,9 +207,11 @@ class Conversation(Base):
     end_time = Column(TIMESTAMP)
     questionnaire_id = Column(BigInteger, ForeignKey('Questionnaires.id'))
     status = Column(Text)
+    patient_id = Column(BigInteger, ForeignKey('Patients.id'))
 
     questionnaire = relationship("Questionnaire", back_populates="conversations")
     chat_logs = relationship("ChatLogMessage", back_populates="conversation")
+    patient = relationship("Patient", back_populates="conversations")
 
 SessionLocal = sessionmaker(bind=engine)
 
