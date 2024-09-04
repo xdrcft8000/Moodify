@@ -141,10 +141,9 @@ def create_new_questionnaire(patient_id, template_id, user_id, current_status, d
 
 
 
-def create_new_conversation(patient_id: int, user_id: int, status: str, questionnaire_id: int | None, db: Session = Depends(get_db)):
+def create_new_conversation(patient_id: int, status: str, questionnaire_id: int | None, db: Session = Depends(get_db)):
     new_conversation = Conversation(
         patient_id=patient_id,
-        user_id=user_id,
         created_at=datetime.now(timezone.utc),
         ended_at=None,
         status=status,
@@ -400,7 +399,7 @@ async def init_questionnaire(request: InitQuestionnaireRequest, db: Session = De
 
             questionnaire = create_new_questionnaire(request.patient_id, request.template_id, request.user_id, "0", db)
 
-            conversation = create_new_conversation(request.patient_id, request.user_id, "Initiated", questionnaire.id, db)
+            conversation = create_new_conversation(request.patient_id, "Initiated", questionnaire.id, db)
 
         await send_whatsapp_begin_questionnaire_template(request.patient_id, conversation.id, "begin_questionnaire")
 
