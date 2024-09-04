@@ -87,7 +87,10 @@ class QuestionnaireCreateRequest(BaseModel):
 class AnyRequestModel(RootModel[Dict[str, Any]]):
     pass
 
-
+class InitQuestionnaireRequest(BaseModel):
+    patient_id: int
+    template_id: int
+    user_id: int
 
 #POSTGRES MODELS
 

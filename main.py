@@ -343,8 +343,8 @@ async def root():
 
 
 @app.post("/init_questionnaire")
-async def init_questionnaire(patient_id: int, template_id: int, user_id: int):
-    return await start_questionnaire(patient_id, user_id, template_id)
+async def init_questionnaire(request: InitQuestionnaireRequest):
+    return await start_questionnaire(request.patient_id, request.user_id, request.template_id)
     return {"status": "success"}
 
 
