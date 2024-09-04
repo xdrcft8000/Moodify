@@ -10,7 +10,6 @@ import re
 import time
 import logging
 from fastapi.responses import JSONResponse, Response
-from typing import List, Optional, Dict, Any
 from supabase import create_client, Client
 url: str = os.environ.get("SUPABASE_URL")
 key: str = os.environ.get("SUPABASE_KEY")
@@ -232,7 +231,7 @@ async def webhook(body: WhatsAppWebhookBody):
         message_text = message.text.body
     elif message.type == "audio":
         print('Audio message')
-        message_text = process_audio_message(message)
+        message_text = await process_audio_message(message)
     else:
         print('Message type:', message.type)
     
@@ -344,12 +343,7 @@ async def root():
 
 @app.post("/propose_questionnaire")
 async def propose_questionnaire(patient_id: int, template_id: int, user_id: int, current_status: str):
-
-
-    
-
-
-    return {"status": "success", "data": conversation}
+    return {"status": "success"}
 
 
 async def start_questionnaire(patient_id: int, user_id: int, template_id: int, current_status: str, db: Session = Depends(get_db)):
