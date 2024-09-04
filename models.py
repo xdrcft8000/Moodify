@@ -1,9 +1,11 @@
 import os
 from pydantic import BaseModel, Field, RootModel, EmailStr
 from typing import List, Optional, Dict, Any
+# from dotenv import load_dotenv
+# load_dotenv()
 
 
-#PYDANTIC MODELS
+#PYDANTIC REQUEST MODELS
 
 class Text(BaseModel):
     body: str
@@ -91,15 +93,13 @@ class InitQuestionnaireRequest(BaseModel):
     template_id: int
     user_id: int
 
-#POSTGRES MODELS
+#POSTGRES DB MODELS
 
 from sqlalchemy import create_engine, MetaData, Table, inspect
 from sqlalchemy.orm import declarative_base, sessionmaker, Session, relationship
 from sqlalchemy import Column, Integer, BigInteger, String, ForeignKey, Text, TIMESTAMP
 from sqlalchemy.dialects.postgresql import JSONB
 
-# from dotenv import load_dotenv
-# load_dotenv()
 
 
 DATABASE_URL = os.environ.get('DATABASE_URL')  # Ensure this environment variable is correctly set
@@ -236,11 +236,25 @@ def get_table_info(db: Session) -> List[Dict[str, Any]]:
             column_info = {
                 "name": column['name'],
                 "type": str(column['type']),
-                "primary_key": column.get('primary_key', False)
+                "nullable": column['nullable'],  # Whether the column can contain NULL values
+                "default": column.get('default'),  # The default value (if any)
+                "autoincrement": column.get('autoincrement', False),  # Auto-increment
+                "primary_key": column.get('primary_key', False),  # Primary key
             }
+            
+            # Check for foreign key relationships
+            foreign_keys = inspector.get_foreign_keys(table_name)
+            column_info["foreign_key"] = None
+            for fk in foreign_keys:
+                for fk_column in fk['constrained_columns']:
+                    if fk_column == column['name']:
+                        column_info["foreign_key"] = {
+                            "referred_table": fk['referred_table'],
+                            "referred_column": fk['referred_columns'][0]
+                        }
+
             table_details["columns"].append(column_info)
         
         table_info.append(table_details)
     
     return table_info
-# Call the function to print the table information
