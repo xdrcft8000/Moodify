@@ -99,7 +99,7 @@ from sqlalchemy import create_engine, MetaData, Table, inspect
 from sqlalchemy.orm import declarative_base, sessionmaker, Session, relationship
 from sqlalchemy import Column, Integer, BigInteger, String, ForeignKey, Text, TIMESTAMP
 from sqlalchemy.dialects.postgresql import JSONB
-
+from sqlalchemy.sql import func
 
 
 DATABASE_URL = os.environ.get('DATABASE_URL')  # Ensure this environment variable is correctly set
@@ -115,25 +115,24 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 # Team model
 class Team(Base):
     __tablename__ = 'Teams'
-    id = Column(BigInteger, primary_key=True)
-    created_at = Column(TIMESTAMP)
-    name = Column(Text)
-    whatsapp_number = Column(String)
-    whatsapp_number_id = Column(BigInteger)
-
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())
+    name = Column(Text, nullable=False)
+    whatsapp_number = Column(String(255), nullable=False)
+    whatsapp_number_id = Column(BigInteger, nullable=False)
     users = relationship("User", back_populates="team")
     templates = relationship("Template", back_populates="team")
 
 # User model
 class User(Base):
     __tablename__ = 'Users'
-    id = Column(BigInteger, primary_key=True)
-    created_at = Column(TIMESTAMP)
-    first_name = Column(String)
-    last_name = Column(String)
-    title = Column(String)
-    email = Column(String)
-    team_id = Column(BigInteger, ForeignKey('Teams.id'))
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())
+    first_name = Column(String(255), nullable=False)
+    last_name = Column(String(255), nullable=False)
+    title = Column(String(255), nullable=True)
+    email = Column(String(255), nullable=False)
+    team_id = Column(BigInteger, ForeignKey('Teams.id'), nullable=False)
 
     team = relationship("Team", back_populates="users")
     patients = relationship("Patient", back_populates="assigned_to_user")
@@ -143,13 +142,13 @@ class User(Base):
 # Patient model
 class Patient(Base):
     __tablename__ = 'Patients'
-    id = Column(BigInteger, primary_key=True)
-    created_at = Column(TIMESTAMP)
-    first_name = Column(String)
-    last_name = Column(String)
-    assigned_to = Column(BigInteger, ForeignKey('Users.id'))
-    phone_number = Column(String)
-    email = Column(String)
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())
+    first_name = Column(String(255), nullable=False)
+    last_name = Column(String(255), nullable=False)
+    assigned_to = Column(BigInteger, ForeignKey('Users.id'), nullable=True)
+    phone_number = Column(String(50), nullable=True)
+    email = Column(String(255), nullable=True)
 
     assigned_to_user = relationship("User", back_populates="patients")
     questionnaires = relationship("Questionnaire", back_populates="patient")
@@ -159,7 +158,7 @@ class Patient(Base):
 class Template(Base):
     __tablename__ = 'Templates'
     id = Column(BigInteger, primary_key=True)
-    created_at = Column(TIMESTAMP)
+    created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())
     owner = Column(BigInteger, ForeignKey('Users.id'))
     duration = Column(Text)
     questions = Column(JSONB)
@@ -174,7 +173,7 @@ class Template(Base):
 class Questionnaire(Base):
     __tablename__ = 'Questionnaires'
     id = Column(BigInteger, primary_key=True)
-    created_at = Column(TIMESTAMP)
+    created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())
     patient_id = Column(BigInteger, ForeignKey('Patients.id'))
     template_id = Column(BigInteger, ForeignKey('Templates.id'))
     user_id = Column(BigInteger, ForeignKey('Users.id'))
@@ -190,7 +189,7 @@ class Questionnaire(Base):
 class ChatLogMessage(Base):
     __tablename__ = 'Chat_logs'
     id = Column(BigInteger, primary_key=True)
-    created_at = Column(TIMESTAMP)
+    created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())
     role = Column(Text)
     patient_id = Column(BigInteger, ForeignKey('Patients.id'))
     message_text = Column(Text)
@@ -203,7 +202,7 @@ class ChatLogMessage(Base):
 class Conversation(Base):
     __tablename__ = 'Conversations'
     id = Column(BigInteger, primary_key=True)
-    created_at = Column(TIMESTAMP)
+    created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())
     start_time = Column(TIMESTAMP)
     end_time = Column(TIMESTAMP)
     questionnaire_id = Column(BigInteger, ForeignKey('Questionnaires.id'))

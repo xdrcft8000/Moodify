@@ -11,6 +11,7 @@ import time
 import logging
 from fastapi.responses import JSONResponse, Response
 from supabase import create_client, Client
+from sqlalchemy.exc import SQLAlchemyError
 url: str = os.environ.get("SUPABASE_URL")
 key: str = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(url, key)
@@ -37,11 +38,33 @@ def get_db():
         db.close()
 
 
+def create_item_in_db(db: Session, item):
+    try:
+        db.add(item)
+        db.commit()
+        db.refresh(item)
+        return {"status": "success", "data": item}
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+
+def create_item_in_db_internal(db: Session, item):
+    try:
+        db.add(item)
+        db.commit()
+        db.refresh(item)
+        return item
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=f"Failed to create item: {str(e)}")
+
+
 @app.get("/db/table_info")
 def table_info_endpoint(db: Session = Depends(get_db)):
     table_info = get_table_info(db)
     return {"status": "success", "data": table_info}
 
+# Helper function to create new objects
 @app.post("/db/new_team")
 def create_new_team(team: TeamCreateRequest, db: Session = Depends(get_db)):
     new_team = Team(
@@ -50,18 +73,10 @@ def create_new_team(team: TeamCreateRequest, db: Session = Depends(get_db)):
         whatsapp_number_id=team.whatsapp_number_id,
         created_at=datetime.now(timezone.utc)
     )
-    try:
-        db.add(new_team)
-        db.commit()
-        db.refresh(new_team)
-        return {"status": "success", "data": new_team}
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+    return create_item_in_db(db, new_team)
 
-# Endpoint to create a new patient
 @app.post("/db/new_patient")
-def create_new_patient(patient: PatientCreateRequest,  db: Session = Depends(get_db)):
+def create_new_patient(patient: PatientCreateRequest, db: Session = Depends(get_db)):
     new_patient = Patient(
         first_name=patient.first_name,
         last_name=patient.last_name,
@@ -70,20 +85,9 @@ def create_new_patient(patient: PatientCreateRequest,  db: Session = Depends(get
         email=patient.email,
         created_at=datetime.now(timezone.utc)
     )
-    
-    # Add the new patient to the session and commit
-    try:
-        db.add(new_patient)
-        db.commit()
-        db.refresh(new_patient)  # Refresh to get the updated instance (with ID, etc.)
-        return {"status": "success", "data": new_patient}
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
-    
+    return create_item_in_db(db, new_patient)
 
 
-# Endpoint to create a new user
 @app.post("/db/new_user")
 def create_new_user(user: UserCreateRequest, db: Session = Depends(get_db)):
     new_user = User(
@@ -92,19 +96,12 @@ def create_new_user(user: UserCreateRequest, db: Session = Depends(get_db)):
         title=user.title,
         email=user.email,
         team_id=user.team_id,
-        created_at= datetime.now(timezone.utc)
+        created_at=datetime.now(timezone.utc)
     )
-    
-    try:
-        db.add(new_user)
-        db.commit()
-        db.refresh(new_user)
-        return {"status": "success", "data": new_user}
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+    return create_item_in_db(db, new_user)
 
-@app.post("/db/new_template/")
+
+@app.post("/db/new_template")
 def create_new_template(template: TemplateCreateRequest, db: Session = Depends(get_db)):
     new_template = Template(
         owner=template.owner,
@@ -113,15 +110,7 @@ def create_new_template(template: TemplateCreateRequest, db: Session = Depends(g
         title=template.title,
         created_at=datetime.now(timezone.utc)
     )
-    
-    try:
-        db.add(new_template)
-        db.commit()
-        db.refresh(new_template)
-        return {"status": "success", "data": new_template}
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+    return create_item_in_db(db, new_template)
 
 
 def create_new_questionnaire(patient_id, template_id, user_id, current_status, db: Session = Depends(get_db)):
@@ -143,11 +132,9 @@ def create_new_questionnaire(patient_id, template_id, user_id, current_status, d
             current_status=current_status,
             created_at=datetime.now(timezone.utc)
         )
-        
-        db.add(new_questionnaire)
-        db.commit()
-        db.refresh(new_questionnaire)
-        return {"status": "success", "data": new_questionnaire}
+        return create_item_in_db_internal(db, new_questionnaire)
+    except HTTPException as e:
+        raise e
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
@@ -163,15 +150,7 @@ def create_new_conversation(patient_id: int, user_id: int, status: str, question
         status=status,
         questionnaire_id=questionnaire_id
     )
-    
-    try:
-        db.add(new_conversation)
-        db.commit()
-        db.refresh(new_conversation)
-        return {"status": "success", "data": new_conversation}
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+    return create_item_in_db_internal(db, new_conversation)
 
 
 def log_chat_message(conversation_id: int, patient_id: int, message: str, role: str, db: Session = Depends(get_db)):
@@ -182,16 +161,8 @@ def log_chat_message(conversation_id: int, patient_id: int, message: str, role: 
         created_at=datetime.now(timezone.utc),
         role=role
     )
-    
-    try:
-        db.add(new_message)
-        db.commit()
-        db.refresh(new_message)
-        return {"status": "success", "data": new_message}
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
 
+    return create_item_in_db_internal(db, new_message)
 
 
 # +++++++++++++++++++++++++++++++
@@ -276,6 +247,67 @@ async def send_whatsapp_message(business_phone_number_id: str, recipient_number,
         print(f"An error occurred while sending the WhatsApp message: {str(e)}")
         raise
 
+async def send_whatsapp_begin_questionnaire_template(patient_id, conversation_id, duration,db: Session):
+    
+    patient = db.query(Patient).filter(Patient.id == patient_id).first()
+    if not patient:
+        return {"status": "error", "message": "Patient not found"}
+    
+    user = db.query(User).filter(User.id == patient.assigned_to).first()
+    if not user:
+        return {"status": "error", "message": "User not found"}
+
+    team = db.query(Team).filter(Team.id == user.team_id).first()
+    if not team:
+        return {"status": "error", "message": "Team not found"}
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"https://graph.facebook.com/v18.0/{team.whatsapp_number_id}/messages",
+                headers={"Authorization": f"Bearer {WHATSAPP_GRAPH_API_TOKEN}"},
+                json={
+                    "messaging_product": "whatsapp",
+                    "to": patient.phone_number,
+                    "type": "template",
+                    "template": {
+                        "name": "begin_questionnaire",
+                        "language": {
+                            "code": "en_GB"
+                        },
+                        "components": [
+                            {
+                                "type": "body",
+                                "parameters": [
+                                    {
+                                        "type": "text",
+                                        "text": duration
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "quick_reply",
+                                "parameters": [
+                                    {
+                                        "type": "text",
+                                        "text": "Begin",
+                                        "payload": "begin_questionnaire"
+                                    },
+                                ]
+                            }
+                        ]
+                    }
+                }
+            )
+            response.raise_for_status()
+            log_chat_message(conversation_id, patient_id, f"Template:{"begin_questionnaire"}", "system")
+    except httpx.HTTPStatusError as e:
+        print(f"Error sending WhatsApp template message: {e.response.status_code}")
+        raise
+    except httpx.RequestError as e:
+        print(f"An error occurred while sending the WhatsApp template message: {str(e)}")
+        raise
+
 async def mark_message_as_read(business_phone_number_id: str, message_id):
     try:
         async with httpx.AsyncClient() as client:
@@ -343,9 +375,35 @@ async def root():
 
 
 @app.post("/init_questionnaire")
-def init_questionnaire(request: InitQuestionnaireRequest, db: Session = Depends(get_db)):
-    return  start_questionnaire(request.patient_id, request.user_id, request.template_id, db)
-    return {"status": "success"}
+async def init_questionnaire(request: InitQuestionnaireRequest, db: Session = Depends(get_db)):
+
+    try:
+
+        # Check if a questionnaire with the same patient, template, and status (0) already exists
+        questionnaire = db.query(Questionnaire).filter(
+            Questionnaire.patient_id == request.patient_id,
+            Questionnaire.template_id == request.template_id,
+            Questionnaire.current_status == "0"
+        ).first()
+
+        # Check if a conversation with the same patient and status ("Initiated") already exists
+        conversation = db.query(Conversation).filter(
+            Conversation.patient_id == request.patient_id,
+            Conversation.status == "Initiated"
+        ).first()
+
+        already_initiated = conversation and questionnaire
+        if not already_initiated:
+
+            questionnaire = create_new_questionnaire(request.patient_id, request.template_id, request.user_id, "0", db)
+
+            conversation = create_new_conversation(request.patient_id, request.user_id, "Initiated", questionnaire.id, db)
+
+        await send_whatsapp_begin_questionnaire_template(request.patient_id, conversation.id, "begin_questionnaire")
+
+        return {"status": "success", "data": conversation}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 
 def start_questionnaire(patient_id: int, user_id: int, template_id: int, db: Session):
@@ -367,19 +425,6 @@ def start_questionnaire(patient_id: int, user_id: int, template_id: int, db: Ses
         return {"status": "success", "user": user, "team": team, "patient": patient}
     except Exception as e:
         return {"status": "error", "message": str(e)}
-    
-    # Create a new questionnaire
-    questionnaire = create_new_questionnaire(patient_id, template_id, user_id, current_status)
-    
-    # Create a new conversation
-    conversation = create_new_conversation(patient_id, user_id, "active", questionnaire.get("data").get("id"))
-
-    patient_phone_number = patient.get('data').get('phone_number')
-
-    send_whatsapp_message()
-
-    return {"status": "success", "data": conversation}
-
 
 
 # +++++++++++++++++++++++++++++++
