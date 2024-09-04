@@ -343,12 +343,12 @@ async def root():
 
 
 @app.post("/init_questionnaire")
-def init_questionnaire(request: InitQuestionnaireRequest):
-    return  start_questionnaire(request.patient_id, request.user_id, request.template_id)
+def init_questionnaire(request: InitQuestionnaireRequest, db: Session = Depends(get_db)):
+    return  start_questionnaire(request.patient_id, request.user_id, request.template_id, db)
     return {"status": "success"}
 
 
-def start_questionnaire(patient_id: int, user_id: int, template_id: int, db: Session = Depends(get_db)):
+def start_questionnaire(patient_id: int, user_id: int, template_id: int, db: Session):
 
     try:
         user = db.query(User).filter(User.id == user_id).first()
