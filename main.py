@@ -343,21 +343,30 @@ async def root():
 
 
 @app.post("/init_questionnaire")
-async def init_questionnaire(request: InitQuestionnaireRequest):
-    return await start_questionnaire(request.patient_id, request.user_id, request.template_id)
+def init_questionnaire(request: InitQuestionnaireRequest):
+    return  start_questionnaire(request.patient_id, request.user_id, request.template_id)
     return {"status": "success"}
 
 
-async def start_questionnaire(patient_id: int, user_id: int, template_id: int, db: Session = Depends(get_db)):
+def start_questionnaire(patient_id: int, user_id: int, template_id: int, db: Session = Depends(get_db)):
+
+    try:
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            return {"status": "error", "message": "User not found"}
+
+        team = db.query(Team).filter(Team.id == user.team_id).first()
+        if not team:
+            return {"status": "error", "message": "Team not found"}
+
+        patient = db.query(Patient).filter(Patient.id == patient_id).first()
+        if not patient:
+            return {"status": "error", "message": "Patient not found"}
 
 
-    user = db.query(User).filter(User.id == user_id).first()
-
-    team = db.query(Team).filter(Team.id == user.get('team_id')).first()
-
-    patient = db.query(Patient).filter(Patient.id == patient_id).first()
-
-    return {"status": "success", "user": user, "team": team, "patient": patient}
+        return {"status": "success", "user": user, "team": team, "patient": patient}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
     
     # Create a new questionnaire
     questionnaire = create_new_questionnaire(patient_id, template_id, user_id, current_status)
