@@ -51,7 +51,10 @@ class WhatsAppWebhookBody(BaseModel):
     object: str
     entry: List[Entry]
 
-
+class TeamCreateRequest(BaseModel):
+    name: str
+    whatsapp_number: str
+    whatsapp_number_id: str
 
 class PatientCreateRequest(BaseModel):
     first_name: str
@@ -63,6 +66,7 @@ class PatientCreateRequest(BaseModel):
 class UserCreateRequest(BaseModel):
     first_name: str
     last_name: str
+    team_id: int
     title: Optional[str] = None
     email: EmailStr
 
@@ -70,6 +74,7 @@ class TemplateCreateRequest(BaseModel):
     owner: int
     duration: str
     title: str
+    team_id: Optional[int] = None
     questions: Dict[str, Any]  
 
 class QuestionnaireCreateRequest(BaseModel):
@@ -104,6 +109,9 @@ metadata.reflect(bind=engine)
 Base = declarative_base(metadata=metadata)
 
 # Example of accessing a table
+class Team(Base):
+    __table__ = metadata.tables['Teams']
+
 class User(Base):
     __table__ = metadata.tables['Users'] 
 
@@ -120,7 +128,7 @@ class ChatLogMessage(Base):
     __table__ = metadata.tables['Chat_logs'] 
 
 class Conversation(Base):
-    __table__ = metadata.tables['Conversations']  
+    __table__ = metadata.tables['Conversations']
 
 
 SessionLocal = sessionmaker(bind=engine)

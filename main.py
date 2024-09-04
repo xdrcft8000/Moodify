@@ -43,6 +43,22 @@ def table_info_endpoint(db: Session = Depends(get_db)):
     table_info = get_table_info(db)
     return {"status": "success", "data": table_info}
 
+@app.post("/db/new_team")
+def create_new_team(team: TeamCreateRequest, db: Session = Depends(get_db)):
+    new_team = Team(
+        name=team.name,
+        whatsapp_number=team.whatsapp_number,
+        whatsapp_number_id=team.whatsapp_number_id,
+        created_at=datetime.now(timezone.utc)
+    )
+    try:
+        db.add(new_team)
+        db.commit()
+        db.refresh(new_team)
+        return {"status": "success", "data": new_team}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
 
 # Endpoint to create a new patient
 @app.post("/db/new_patient")
@@ -108,7 +124,7 @@ def create_new_template(template: TemplateCreateRequest, db: Session = Depends(g
         raise HTTPException(status_code=400, detail=str(e))
 
 
-def create_new_questionnaire(patient_id, template_id, user_id, questions, current_status, db: Session = Depends(get_db)):
+def create_new_questionnaire(patient_id, template_id, user_id, current_status, db: Session = Depends(get_db)):
     try:
         # Fetch the template from the database
         template_instance = db.query(Template).filter(Template.id == template_id).first()
@@ -117,15 +133,13 @@ def create_new_questionnaire(patient_id, template_id, user_id, questions, curren
             raise HTTPException(status_code=404, detail="Template not found")
 
         # Process questions
-        questions = json.loads(template_instance.questions)
-        for key in questions:
-            questions[key]['response'] = questions.get(key)
+        questions = template_instance.questions
 
         new_questionnaire = Questionnaire(
             patient_id=patient_id,
             template_id=template_id,
             user_id=user_id,
-            questions=json.dumps(questions),
+            questions=questions,
             current_status=current_status,
             created_at=datetime.now(timezone.utc)
         )
@@ -181,7 +195,7 @@ def log_chat_message(conversation_id: int, patient_id: int, message: str, role: 
 
 
 # +++++++++++++++++++++++++++++++
-# ++++++++++ WHATSAPP ++++++++++
+# ++++++++++ WHATSAPP +++++++++++
 # +++++++++++++++++++++++++++++++
 
 from openai import OpenAI
@@ -222,6 +236,8 @@ async def webhook(body: WhatsAppWebhookBody):
     else:
         print('Message type:', message.type)
     
+    mark_message_as_read(business_phone_number_id, message.id)
+    send_whatsapp_message(business_phone_number_id, message.from_, message_text, message.id)
     return {"status": "success"}
 
 
@@ -284,9 +300,9 @@ async def mark_message_as_read(business_phone_number_id: str, message_id):
 async def process_audio_message(message: Message):
     print(f"Received audio message: {message.audio.id}")
     try:
-        # Use an async client to make HTTP requests
+
         async with httpx.AsyncClient() as client:
-            # Call to external service
+            # Get the audio file
             response = await client.get(
                 f"https://graph.facebook.com/v20.0/{message.audio.id}/",
                 headers={"Authorization": f"Bearer {WHATSAPP_GRAPH_API_TOKEN}"},
@@ -325,6 +341,32 @@ def parse_numeric_response(response: str) -> int:
 async def root():
     return {"message": "Nothing to see here. Checkout README.md to start."}
 
+
+@app.post("/propose_questionnaire")
+async def propose_questionnaire(patient_id: int, template_id: int, user_id: int, current_status: str):
+
+
+    
+
+
+    return {"status": "success", "data": conversation}
+
+
+async def start_questionnaire(patient_id: int, user_id: int, template_id: int, current_status: str, db: Session = Depends(get_db)):
+
+    patient = db.query(Patient).filter(Patient.id == patient_id).first()
+    
+    # Create a new questionnaire
+    questionnaire = create_new_questionnaire(patient_id, template_id, user_id, current_status)
+    
+    # Create a new conversation
+    conversation = create_new_conversation(patient_id, user_id, "active", questionnaire.get("data").get("id"))
+
+    patient_phone_number = patient.get('data').get('phone_number')
+
+    send_whatsapp_message()
+
+    return {"status": "success", "data": conversation}
 
 # +++++++++++++++++++++++++++++++
 # ++++++++++ OPENAI +++++++++++++
