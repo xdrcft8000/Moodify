@@ -135,7 +135,7 @@ SessionLocal = sessionmaker(bind=engine)
 
 def get_table_info(db: Session) -> List[Dict[str, Any]]:
     table_info = []
-    models = [User, Patient, Template, Questionnaire, ChatLogMessage, Conversation]
+    models = [User, Patient, Template, Questionnaire, ChatLogMessage, Conversation, Team]
 
     for model in models:
         table_details = {

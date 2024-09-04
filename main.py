@@ -91,6 +91,7 @@ def create_new_user(user: UserCreateRequest, db: Session = Depends(get_db)):
         last_name=user.last_name,
         title=user.title,
         email=user.email,
+        team_id=user.team_id,
         created_at= datetime.now(timezone.utc)
     )
     
@@ -341,14 +342,22 @@ async def root():
     return {"message": "Nothing to see here. Checkout README.md to start."}
 
 
-@app.post("/propose_questionnaire")
-async def propose_questionnaire(patient_id: int, template_id: int, user_id: int, current_status: str):
+@app.post("/init_questionnaire")
+async def init_questionnaire(patient_id: int, template_id: int, user_id: int):
+    return await start_questionnaire(patient_id, user_id, template_id)
     return {"status": "success"}
 
 
-async def start_questionnaire(patient_id: int, user_id: int, template_id: int, current_status: str, db: Session = Depends(get_db)):
+async def start_questionnaire(patient_id: int, user_id: int, template_id: int, db: Session = Depends(get_db)):
+
+
+    user = db.query(User).filter(User.id == user_id).first()
+
+    team = db.query(Team).filter(Team.id == user.get('team_id')).first()
 
     patient = db.query(Patient).filter(Patient.id == patient_id).first()
+
+    return {"status": "success", "user": user, "team": team, "patient": patient}
     
     # Create a new questionnaire
     questionnaire = create_new_questionnaire(patient_id, template_id, user_id, current_status)
@@ -361,6 +370,8 @@ async def start_questionnaire(patient_id: int, user_id: int, template_id: int, c
     send_whatsapp_message()
 
     return {"status": "success", "data": conversation}
+
+
 
 # +++++++++++++++++++++++++++++++
 # ++++++++++ OPENAI +++++++++++++
