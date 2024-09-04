@@ -204,8 +204,7 @@ class Conversation(Base):
     __tablename__ = 'Conversations'
     id = Column(BigInteger, primary_key=True)
     created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())
-    start_time = Column(TIMESTAMP)
-    end_time = Column(TIMESTAMP)
+    ended_at = Column(TIMESTAMP, server_default=None)
     questionnaire_id = Column(BigInteger, ForeignKey('Questionnaires.id'))
     status = Column(Text)
     patient_id = Column(BigInteger, ForeignKey('Patients.id'))
