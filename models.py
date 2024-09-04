@@ -153,6 +153,7 @@ class Patient(Base):
     assigned_to_user = relationship("User", back_populates="patients")
     questionnaires = relationship("Questionnaire", back_populates="patient")
     chat_logs = relationship("ChatLogMessage", back_populates="patient")
+    conversations = relationship("Conversation", back_populates="patient")
 
 # Template model
 class Template(Base):
