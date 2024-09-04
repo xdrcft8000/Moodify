@@ -1,7 +1,6 @@
 import os
 from pydantic import BaseModel, Field, RootModel, EmailStr
 from typing import List, Optional, Dict, Any
-from sqlalchemy.orm import declarative_base, sessionmaker, Session
 
 
 #PYDANTIC MODELS
@@ -94,69 +93,154 @@ class InitQuestionnaireRequest(BaseModel):
 
 #POSTGRES MODELS
 
-from sqlalchemy import create_engine, MetaData, Table
-from sqlalchemy.orm import declarative_base
+from sqlalchemy import create_engine, MetaData, Table, inspect
+from sqlalchemy.orm import declarative_base, sessionmaker, Session, relationship
+from sqlalchemy import Column, Integer, BigInteger, String, ForeignKey, Text, TIMESTAMP
+from sqlalchemy.dialects.postgresql import JSONB
+
 # from dotenv import load_dotenv
 # load_dotenv()
 
 
-# Connect to your PostgreSQL database
-DATABASE_URL = os.environ.get('DATABASE_URL')
+DATABASE_URL = os.environ.get('DATABASE_URL')  # Ensure this environment variable is correctly set
 engine = create_engine(DATABASE_URL, echo=True)
 
-# Reflect the tables
-metadata = MetaData()
-metadata.reflect(bind=engine)
-
 # Create a base class for declarative models
-Base = declarative_base(metadata=metadata)
+Base = declarative_base()
 
-# Example of accessing a table
+# Set up a session maker
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+# Team model
 class Team(Base):
-    __table__ = metadata.tables['Teams']
+    __tablename__ = 'Teams'
+    id = Column(BigInteger, primary_key=True)
+    created_at = Column(TIMESTAMP)
+    name = Column(Text)
+    whatsapp_number = Column(String)
+    whatsapp_number_id = Column(BigInteger)
 
+    users = relationship("User", back_populates="team")
+    templates = relationship("Template", back_populates="team")
+
+# User model
 class User(Base):
-    __table__ = metadata.tables['Users'] 
+    __tablename__ = 'Users'
+    id = Column(BigInteger, primary_key=True)
+    created_at = Column(TIMESTAMP)
+    first_name = Column(String)
+    last_name = Column(String)
+    title = Column(String)
+    email = Column(String)
+    team_id = Column(BigInteger, ForeignKey('Teams.id'))
 
+    team = relationship("Team", back_populates="users")
+    patients = relationship("Patient", back_populates="assigned_to_user")
+    templates = relationship("Template", back_populates="owner_user")
+    questionnaires = relationship("Questionnaire", back_populates="user")
+
+# Patient model
 class Patient(Base):
-    __table__ = metadata.tables['Patients'] 
+    __tablename__ = 'Patients'
+    id = Column(BigInteger, primary_key=True)
+    created_at = Column(TIMESTAMP)
+    first_name = Column(String)
+    last_name = Column(String)
+    assigned_to = Column(BigInteger, ForeignKey('Users.id'))
+    phone_number = Column(String)
+    email = Column(String)
 
+    assigned_to_user = relationship("User", back_populates="patients")
+    questionnaires = relationship("Questionnaire", back_populates="patient")
+    chat_logs = relationship("ChatLogMessage", back_populates="patient")
+
+# Template model
 class Template(Base):
-    __table__ = metadata.tables['Templates'] 
+    __tablename__ = 'Templates'
+    id = Column(BigInteger, primary_key=True)
+    created_at = Column(TIMESTAMP)
+    owner = Column(BigInteger, ForeignKey('Users.id'))
+    duration = Column(Text)
+    questions = Column(JSONB)
+    title = Column(Text)
+    team_id = Column(BigInteger, ForeignKey('Teams.id'))
 
+    owner_user = relationship("User", back_populates="templates")
+    team = relationship("Team", back_populates="templates")
+    questionnaires = relationship("Questionnaire", back_populates="template")
+
+# Questionnaire model
 class Questionnaire(Base):
-    __table__ = metadata.tables['Questionnaires']  
+    __tablename__ = 'Questionnaires'
+    id = Column(BigInteger, primary_key=True)
+    created_at = Column(TIMESTAMP)
+    patient_id = Column(BigInteger, ForeignKey('Patients.id'))
+    template_id = Column(BigInteger, ForeignKey('Templates.id'))
+    user_id = Column(BigInteger, ForeignKey('Users.id'))
+    questions = Column(JSONB)
+    current_status = Column(String)
 
+    patient = relationship("Patient", back_populates="questionnaires")
+    template = relationship("Template", back_populates="questionnaires")
+    user = relationship("User", back_populates="questionnaires")
+    conversations = relationship("Conversation", back_populates="questionnaire")
+
+# ChatLogMessage model
 class ChatLogMessage(Base):
-    __table__ = metadata.tables['Chat_logs'] 
+    __tablename__ = 'Chat_logs'
+    id = Column(BigInteger, primary_key=True)
+    created_at = Column(TIMESTAMP)
+    role = Column(Text)
+    patient_id = Column(BigInteger, ForeignKey('Patients.id'))
+    message_text = Column(Text)
+    conversation_id = Column(BigInteger, ForeignKey('Conversations.id'))
 
+    patient = relationship("Patient", back_populates="chat_logs")
+    conversation = relationship("Conversation", back_populates="chat_logs")
+
+# Conversation model
 class Conversation(Base):
-    __table__ = metadata.tables['Conversations']
+    __tablename__ = 'Conversations'
+    id = Column(BigInteger, primary_key=True)
+    created_at = Column(TIMESTAMP)
+    start_time = Column(TIMESTAMP)
+    end_time = Column(TIMESTAMP)
+    questionnaire_id = Column(BigInteger, ForeignKey('Questionnaires.id'))
+    status = Column(Text)
 
+    questionnaire = relationship("Questionnaire", back_populates="conversations")
+    chat_logs = relationship("ChatLogMessage", back_populates="conversation")
 
 SessionLocal = sessionmaker(bind=engine)
 
 def get_table_info(db: Session) -> List[Dict[str, Any]]:
+    # Use SQLAlchemy's Inspector to fetch information directly from the database
+    inspector = inspect(db.bind)
+    
+    # Get a list of all table names in the database
+    table_names = inspector.get_table_names()
+    
     table_info = []
-    models = [User, Patient, Template, Questionnaire, ChatLogMessage, Conversation, Team]
 
-    for model in models:
+    # Loop through each table in the database
+    for table_name in table_names:
         table_details = {
-            "table_name": model.__table__.name,
+            "table_name": table_name,
             "columns": []
         }
-
-        table = model.__table__
-        for column in table.columns:
+        
+        # Get column information for each table
+        columns = inspector.get_columns(table_name)
+        for column in columns:
             column_info = {
-                "name": column.name,
-                "type": str(column.type),
-                "primary_key": column.primary_key
+                "name": column['name'],
+                "type": str(column['type']),
+                "primary_key": column.get('primary_key', False)
             }
             table_details["columns"].append(column_info)
-
+        
         table_info.append(table_details)
-
+    
     return table_info
-
 # Call the function to print the table information
