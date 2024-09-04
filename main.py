@@ -380,6 +380,7 @@ async def root():
 async def init_questionnaire(request: InitQuestionnaireRequest, db: Session = Depends(get_db)):
 
     try:
+        template = db.query(Template).filter(Template.id == request.template_id).first()
 
         # Check if a questionnaire with the same patient, template, and status (0) already exists
         questionnaire = db.query(Questionnaire).filter(
@@ -401,7 +402,7 @@ async def init_questionnaire(request: InitQuestionnaireRequest, db: Session = De
 
             conversation = create_new_conversation(request.patient_id, "Initiated", questionnaire.id, db)
 
-        await send_whatsapp_begin_questionnaire_template(request.patient_id, conversation.id, "begin_questionnaire")
+        await send_whatsapp_begin_questionnaire_template(request.patient_id, conversation.id, template.duration, db)
 
         return {"status": "success", "data": conversation}
     except Exception as e:
