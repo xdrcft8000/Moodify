@@ -275,7 +275,7 @@ async def send_whatsapp_begin_questionnaire_template(patient_id, conversation_id
                     "template": {
                         "name": "begin_questionnaire",
                         "language": {
-                            "code": "en_GB"
+                            "code": "en"
                         },
                         "components": [
                             {
@@ -288,15 +288,17 @@ async def send_whatsapp_begin_questionnaire_template(patient_id, conversation_id
                                 ]
                             },
                             {
-                                "type": "quick_reply",
-                                "parameters": [
-                                    {
-                                        "type": "text",
-                                        "text": "Begin",
-                                        "payload": "begin_questionnaire"
-                                    },
-                                ]
-                            }
+                                 "type": "BUTTON",
+                                 "sub_type": "QUICK_REPLY",
+                                 "index": "0",
+                                 "parameters": [
+                                     {
+                                         "type": "text",
+                                         "text": "Begin",
+                                         "payload": "begin_questionnaire"
+                                     }
+                                 ]
+                             }
                         ]
                     }
                 }
