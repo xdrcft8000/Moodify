@@ -236,8 +236,8 @@ async def webhook(body: WhatsAppWebhookBody):
     else:
         print('Message type:', message.type)
     
-    mark_message_as_read(business_phone_number_id, message.id)
-    send_whatsapp_message(business_phone_number_id, message.from_, message_text, message.id)
+    await mark_message_as_read(business_phone_number_id, message.id)
+    await send_whatsapp_message(business_phone_number_id, message.from_, message_text, message.id)
     return {"status": "success"}
 
 
