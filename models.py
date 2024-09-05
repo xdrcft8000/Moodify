@@ -1,5 +1,5 @@
 import os
-from pydantic import BaseModel, Field, RootModel, EmailStr
+from pydantic import BaseModel, Field, RootModel, EmailStr, field_validator
 from typing import List, Optional, Dict, Any
 # from dotenv import load_dotenv
 # load_dotenv()
@@ -7,50 +7,114 @@ from typing import List, Optional, Dict, Any
 
 #PYDANTIC REQUEST MODELS
 
-class Text(BaseModel):
-    body: str
-
-class Audio(BaseModel):
+class Status(BaseModel):
     id: str
-    mime_type: str
+    status: str
+    timestamp: str
+    recipient_id: str
+    conversation: Optional[Dict] = None
+    pricing: Optional[Dict] = None
 
 class Message(BaseModel):
-    from_: Optional[str] = Field(None, alias='from')
-    id: Optional[str] = None
-    timestamp: Optional[str] = None
-    text: Optional[Text] = None
-    type: Optional[str] = None
-    audio: Optional[Audio] = None
-
-
-class Profile(BaseModel):
-    name: str
-
-class Contact(BaseModel):
-    profile: Profile
-    wa_id: str
+    id: str
+    from_: str = Field(..., alias='from')
+    timestamp: str
+    type: str
+    text: Optional[Dict] = None
+    button: Optional[Dict] = None
+    audio: Optional[Dict] = None
 
 class Metadata(BaseModel):
     display_phone_number: str
     phone_number_id: str
 
+class Profile(BaseModel):
+    name: str
+
+
+class Contact(BaseModel):
+    profile: Profile
+    wa_id: str
+
+
 class Value(BaseModel):
     messaging_product: str
     metadata: Metadata
-    contacts: List[Contact]
-    messages: List[Message]
+    messages: Optional[List[Message]] = None
+    statuses: Optional[List[Status]] = None
+    contacts: Optional[List[Contact]] = None  # Added contacts here
+
 
 class Change(BaseModel):
-    value: Value
     field: str
+    value: Value
+
+    @field_validator('value')
+    def check_value(cls, v):
+        if 'statuses' not in v and 'messages' not in v:
+            raise ValueError("Neither 'statuses' nor 'messages' found in value")
+        return v
 
 class Entry(BaseModel):
     id: str
     changes: List[Change]
 
-class WhatsAppWebhookBody(BaseModel):
+class WebhookRequest(BaseModel):
     object: str
     entry: List[Entry]
+
+
+
+
+
+
+# class Text(BaseModel):
+#     body: str
+
+# class Audio(BaseModel):
+#     id: str
+#     mime_type: str
+
+# class Message(BaseModel):
+#     from_: Optional[str] = Field(None, alias='from')
+#     id: Optional[str] = None
+#     timestamp: Optional[str] = None
+#     text: Optional[Text] = None
+#     type: Optional[str] = None
+#     audio: Optional[Audio] = None
+
+
+# class Profile(BaseModel):
+#     name: str
+
+# class Contact(BaseModel):
+#     profile: Profile
+#     wa_id: str
+
+# class Metadata(BaseModel):
+#     display_phone_number: str
+#     phone_number_id: str
+
+# class Value(BaseModel):
+#     messaging_product: str
+#     metadata: Metadata
+#     contacts: List[Contact]
+#     messages: List[Message]
+
+# class Change(BaseModel):
+#     value: Value
+#     field: str
+
+# class Entry(BaseModel):
+#     id: str
+#     changes: List[Change]
+
+# class WhatsAppWebhookBody(BaseModel):
+#     object: str
+#     entry: List[Entry]
+
+
+
 
 class TeamCreateRequest(BaseModel):
     name: str

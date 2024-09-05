@@ -186,62 +186,100 @@ def init_openai():
     return OpenAI(api_key=os.getenv("OPENAI_KEY"))
 
 
-#Called when a message or update is received from WhatsApp
-@app.post("/whatsapp/webhook")
-async def webhook(body: Request):
-    print('webhook post')
-    # Attempt to read the Request
-    body = await body.json()
-    print(body)
-    try:
-        # message = body.entry[0].changes[0].value.messages[0]
-        message = body.get("entry")[0].get("changes")[0].get("value").get("messages")[0]
-        message_id = message.get("id")
-        message_from = message.get("from")
-    except IndexError:
-        print("Invalid message structure")
-        raise HTTPException(status_code=400, detail="Invalid message structure")
-    except Exception as e:
-        print("Error reading message:", str(e))
-        raise HTTPException(status_code=400, detail="Error reading message")
+# #Called when a message or update is received from WhatsApp
+# @app.post("/whatsapp/webhook")
+# async def webhook(body: Request):
+#     print('webhook post')
+#     # Attempt to read the Request
+#     body = await body.json()
+#     print(body)
+#     try:
+#         # message = body.entry[0].changes[0].value.messages[0]
+#         message = body.get("entry")[0].get("changes")[0].get("value").get("messages")[0]
+#         message_id = message.get("id")
+#         message_from = message.get("from")
+#     except IndexError:
+#         print("Invalid message structure")
+#         raise HTTPException(status_code=400, detail="Invalid message structure")
+#     except Exception as e:
+#         print("Error reading message:", str(e))
+#         raise HTTPException(status_code=400, detail="Error reading message")
 
-    if not message:
-        try:
-            # status = body.entry[0].changes[0].statuses[0].status
-            status = body.get("entry")[0].get("changes")[0].get("statuses")[0].get("status")
-            print(f"Status update: {status}")
-            return {"status": "success"}
-        except Exception as e:
-            print("Error reading status:", str(e))
-            raise HTTPException(status_code=400, detail="Error reading status")
-    else:
+#     if not message:
+#         try:
+#             # status = body.entry[0].changes[0].statuses[0].status
+#             status = body.get("entry")[0].get("changes")[0].get("statuses")[0].get("status")
+#             print(f"Status update: {status}")
+#             return {"status": "success"}
+#         except Exception as e:
+#             print("Error reading status:", str(e))
+#             raise HTTPException(status_code=400, detail="Error reading status")
+#     else:
 
-        # business_phone_number_id = body.entry[0].changes[0].value.metadata.phone_number_id
-        business_phone_number_id = body.get("entry")[0].get("changes")[0].get("value").get("metadata").get("phone_number_id")
+#         # business_phone_number_id = body.entry[0].changes[0].value.metadata.phone_number_id
+#         business_phone_number_id = body.get("entry")[0].get("changes")[0].get("value").get("metadata").get("phone_number_id")
 
-        message_type = message.get("type")
-        if message_type == "text":
-            print('Text message')
-            # message_text = message.text.body
-            message_text = message.get("text").get("body")
-        elif message_type == "audio":
-            print('Audio message')
-            message_text = await process_audio_message(message)
-        elif message_type == "button":
-            print('Begin button')
-            message_text = "Thank you for pressing a button"
-            # button_payload = message.button.payload
-            button_payload = message.get("button").get("payload")
-            if button_payload == "Begin":
-                message_text = "Let's start the questionnaire"
-        else:
-            print('Message type:', message_type)
-            return {"status": "success"}
+#         message_type = message.get("type")
+#         if message_type == "text":
+#             print('Text message')
+#             # message_text = message.text.body
+#             message_text = message.get("text").get("body")
+#         elif message_type == "audio":
+#             print('Audio message')
+#             message_text = await process_audio_message(message)
+#         elif message_type == "button":
+#             print('Begin button')
+#             message_text = "Thank you for pressing a button"
+#             # button_payload = message.button.payload
+#             button_payload = message.get("button").get("payload")
+#             if button_payload == "Begin":
+#                 message_text = "Let's start the questionnaire"
+#         else:
+#             print('Message type:', message_type)
+#             return {"status": "success"}
 
         
+#         await mark_message_as_read(business_phone_number_id, message_id)
+#         await send_whatsapp_message(business_phone_number_id, message_from, message_text, message_id)
+#         return {"status": "success"}
+    
+@app.post("/whatsapp/webhook")
+async def whatsapp_notify_webhook(request: WebhookRequest):
+    
+    for entry in request.entry:
+        for change in entry.changes:
+            value = change.value
+            if 'messages' in value:
+                
+                message = Message(**value['messages'][0])
+
+                if message.type == 'text':
+                    print(f"Text message: {message.text['body']}")
+                    message_text = message.text['body']
+
+                elif message.type == 'audio':
+                    print(f"Audio message: {message.audio}")
+                    message_text = await process_audio_message(message)
+
+                elif message.type == 'button':
+                    print(f"Button pressed: {message.button['payload']}")
+                    message_text = "Thank you for pressing a button"
+                    if message.button['payload'] == 'begin_questionnaire':
+                        message_text = "Let's start the questionnaire"
+            elif 'statuses' in value:
+                status = Status(**value['statuses'][0])
+                print(f"Status update: {status.status} for message {status.id}")
+
+        business_phone_number_id = value.metadata.phone_number_id
+        message_id = message.id
+        message_from = message.from_
+
         await mark_message_as_read(business_phone_number_id, message_id)
         await send_whatsapp_message(business_phone_number_id, message_from, message_text, message_id)
-        return {"status": "success"}
+
+
+    return {"status": "success"}
+
 
 
 #Inital route that verifies the webhook
