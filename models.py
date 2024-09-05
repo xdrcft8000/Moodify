@@ -63,8 +63,9 @@ class WebhookRequest(BaseModel):
     object: str
     entry: List[Entry]
 
-
-
+class WhatsappWebhook(BaseModel):
+    body: WebhookRequest
+    
 
 
 

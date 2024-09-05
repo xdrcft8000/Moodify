@@ -244,9 +244,9 @@ def init_openai():
 #         return {"status": "success"}
     
 @app.post("/whatsapp/webhook")
-async def whatsapp_notify_webhook(request: WebhookRequest):
-    
-    for entry in request.entry:
+async def whatsapp_notify_webhook(request: WhatsappWebhook):
+    body = request.body
+    for entry in body:
         for change in entry.changes:
             value = change.value
             if 'messages' in value:
