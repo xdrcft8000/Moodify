@@ -194,7 +194,10 @@ async def webhook(body: Request):
     body = await body.json()
     print(body)
     try:
-        message = body.entry[0].changes[0].value.messages[0]
+        # message = body.entry[0].changes[0].value.messages[0]
+        message = body.get("entry")[0].get("changes")[0].get("value").get("messages")[0]
+        message_id = message.get("id")
+        message_from = message.get("from")
     except IndexError:
         print("Invalid message structure")
         raise HTTPException(status_code=400, detail="Invalid message structure")
@@ -204,7 +207,8 @@ async def webhook(body: Request):
 
     if not message:
         try:
-            status = body.changes[0].statuses[0].status
+            # status = body.entry[0].changes[0].statuses[0].status
+            status = body.get("entry")[0].get("changes")[0].get("statuses")[0].get("status")
             print(f"Status update: {status}")
             return {"status": "success"}
         except Exception as e:
@@ -212,27 +216,31 @@ async def webhook(body: Request):
             raise HTTPException(status_code=400, detail="Error reading status")
     else:
 
-        business_phone_number_id = body.entry[0].changes[0].value.metadata.phone_number_id
+        # business_phone_number_id = body.entry[0].changes[0].value.metadata.phone_number_id
+        business_phone_number_id = body.get("entry")[0].get("changes")[0].get("value").get("metadata").get("phone_number_id")
 
-        if message.type == "text":
+        message_type = message.get("type")
+        if message_type == "text":
             print('Text message')
-            message_text = message.text.body
-        elif message.type == "audio":
+            # message_text = message.text.body
+            message_text = message.get("text").get("body")
+        elif message_type == "audio":
             print('Audio message')
             message_text = await process_audio_message(message)
-        elif message.type == "button":
+        elif message_type == "button":
             print('Begin button')
             message_text = "Thank you for pressing a button"
-            button_payload = message.button.payload
+            # button_payload = message.button.payload
+            button_payload = message.get("button").get("payload")
             if button_payload == "Begin":
                 message_text = "Let's start the questionnaire"
         else:
-            print('Message type:', message.type)
+            print('Message type:', message_type)
             return {"status": "success"}
 
         
-        await mark_message_as_read(business_phone_number_id, message.id)
-        await send_whatsapp_message(business_phone_number_id, message.from_, message_text, message.id)
+        await mark_message_as_read(business_phone_number_id, message_id)
+        await send_whatsapp_message(business_phone_number_id, message_from, message_text, message_id)
         return {"status": "success"}
 
 
