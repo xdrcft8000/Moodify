@@ -115,7 +115,7 @@ def create_new_template(template: TemplateCreateRequest, db: Session = Depends(g
     return create_item_in_db(db, new_template)
 
 
-def create_new_questionnaire(patient_id, template_id, user_id, current_status, db: Session = Depends(get_db)):
+def create_new_questionnaire(patient_id, template_id, user_id, current_status, db: Session):
     try:
         # Fetch the template from the database
         template_instance = db.query(Template).filter(Template.id == template_id).first()
@@ -143,7 +143,7 @@ def create_new_questionnaire(patient_id, template_id, user_id, current_status, d
 
 
 
-def create_new_conversation(patient_id: int, status: str, questionnaire_id: int | None, db: Session = Depends(get_db)):
+def create_new_conversation(patient_id: int, status: str, questionnaire_id: int | None, db: Session):
     new_conversation = Conversation(
         patient_id=patient_id,
         created_at=datetime.now(timezone.utc),
@@ -154,7 +154,7 @@ def create_new_conversation(patient_id: int, status: str, questionnaire_id: int 
     return create_item_in_db_internal(db, new_conversation)
 
 
-def log_chat_message(conversation_id: int, patient_id: int, message: str, role: str, db: Session = Depends(get_db)):
+def log_chat_message(conversation_id: int, patient_id: int, message: str, role: str, db: Session):
     new_message = ChatLogMessage(
         message_text=message,
         patient_id=patient_id,
@@ -249,9 +249,8 @@ async def whatsapp_notify_webhook(request: WebhookRequest):
         for entry in request.entry:
             for change in entry.changes:
                 value = change.value
-                if 'messages' in value:
-                    
-                    message = Message(**value['messages'][0])
+                if value.messages:
+                    message = value.messages[0]
 
                     if message.type == 'text':
                         print(f"Text message: {message.text['body']}")
@@ -277,8 +276,6 @@ async def whatsapp_notify_webhook(request: WebhookRequest):
                 elif 'statuses' in value:
                     status = Status(**value['statuses'][0])
                     print(f"Status update: {status.status} for message {status.id}")
-
-
 
         return {"status": "success"}
     except Exception as e:

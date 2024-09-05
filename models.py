@@ -25,7 +25,7 @@ class Message(BaseModel):
     text: Optional[Dict] = None
     button: Optional[Dict] = None
     audio: Optional[Dict] = None
-    context: Optional[Dict] = None  # Some messages contain a context
+    context: Optional[Dict] = None 
 
 # Model for metadata
 class Metadata(BaseModel):
