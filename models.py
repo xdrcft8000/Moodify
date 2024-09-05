@@ -16,6 +16,12 @@ class Status(BaseModel):
     conversation: Optional[Dict] = None
     pricing: Optional[Dict] = None
 
+
+class Audio(BaseModel):
+    id: str
+    mime_type: str
+
+
 # Model for messages
 class Message(BaseModel):
     id: str
@@ -24,8 +30,11 @@ class Message(BaseModel):
     type: str
     text: Optional[Dict] = None
     button: Optional[Dict] = None
-    audio: Optional[Dict] = None
+    audio: Optional[Audio] = None
     context: Optional[Dict] = None 
+
+
+
 
 # Model for metadata
 class Metadata(BaseModel):
