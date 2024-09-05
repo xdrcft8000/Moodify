@@ -191,33 +191,46 @@ def init_openai():
 async def webhook(body: Request):
     print('webhook post')
     # Attempt to read the Request
-    print(body)
     body = await body.json()
     print(body)
     try:
         message = body.entry[0].changes[0].value.messages[0]
     except IndexError:
+        print("Invalid message structure")
         raise HTTPException(status_code=400, detail="Invalid message structure")
+    except Exception as e:
+        print("Error reading message:", str(e))
+        raise HTTPException(status_code=400, detail="Error reading message")
 
-    business_phone_number_id = body.entry[0].changes[0].value.metadata.phone_number_id
-
-    if message.type == "text":
-        print('Text message')
-        message_text = message.text.body
-    elif message.type == "audio":
-        print('Audio message')
-        message_text = await process_audio_message(message)
-    elif message.type == "button":
-        print('Begin button')
-        message_text = "Thank you for pressing a button"
+    if not message:
+        try:
+            status = body.entry[0].changes[0].statuses[0].status
+            print(f"Status update: {status}")
+            return {"status": "success"}
+        except Exception as e:
+            print("Error reading status:", str(e))
+            raise HTTPException(status_code=400, detail="Error reading status")
     else:
-        print('Message type:', message.type)
-        return {"status": "success"}
 
-    
-    await mark_message_as_read(business_phone_number_id, message.id)
-    await send_whatsapp_message(business_phone_number_id, message.from_, message_text, message.id)
-    return {"status": "success"}
+        business_phone_number_id = body.entry[0].changes[0].value.metadata.phone_number_id
+
+        if message.type == "text":
+            print('Text message')
+            message_text = message.text.body
+        elif message.type == "audio":
+            print('Audio message')
+            message_text = await process_audio_message(message)
+        elif message.type == "button":
+            print('Begin button')
+            message_text = "Thank you for pressing a button"
+        else:
+            print('Message type:', message.type)
+            return {"status": "success"}
+
+        
+        await mark_message_as_read(business_phone_number_id, message.id)
+        await send_whatsapp_message(business_phone_number_id, message.from_, message_text, message.id)
+        return {"status": "success"}
 
 
 #Inital route that verifies the webhook
