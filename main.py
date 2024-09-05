@@ -244,41 +244,46 @@ def init_openai():
 #         return {"status": "success"}
     
 @app.post("/whatsapp/webhook")
-async def whatsapp_notify_webhook(request: WhatsappWebhook):
-    body = request.body
-    for entry in body.entry:
-        for change in entry.changes:
-            value = change.value
-            if 'messages' in value:
-                
-                message = Message(**value['messages'][0])
+async def whatsapp_notify_webhook(request: WebhookRequest):
+    try:
+        for entry in request.entry:
+            for change in entry.changes:
+                value = change.value
+                if 'messages' in value:
+                    
+                    message = Message(**value['messages'][0])
 
-                if message.type == 'text':
-                    print(f"Text message: {message.text['body']}")
-                    message_text = message.text['body']
+                    if message.type == 'text':
+                        print(f"Text message: {message.text['body']}")
+                        message_text = message.text['body']
 
-                elif message.type == 'audio':
-                    print(f"Audio message: {message.audio}")
-                    message_text = await process_audio_message(message)
+                    elif message.type == 'audio':
+                        print(f"Audio message: {message.audio}")
+                        message_text = await process_audio_message(message)
 
-                elif message.type == 'button':
-                    print(f"Button pressed: {message.button['payload']}")
-                    message_text = "Thank you for pressing a button"
-                    if message.button['payload'] == 'begin_questionnaire':
-                        message_text = "Let's start the questionnaire"
-            elif 'statuses' in value:
-                status = Status(**value['statuses'][0])
-                print(f"Status update: {status.status} for message {status.id}")
+                    elif message.type == 'button':
+                        print(f"Button pressed: {message.button['payload']}")
+                        message_text = "Thank you for pressing a button"
+                        if message.button['payload'] == 'begin_questionnaire':
+                            message_text = "Let's start the questionnaire"
 
-        business_phone_number_id = value.metadata.phone_number_id
-        message_id = message.id
-        message_from = message.from_
+                    business_phone_number_id = value.metadata.phone_number_id
+                    message_id = message.id
+                    message_from = message.from_
 
-        await mark_message_as_read(business_phone_number_id, message_id)
-        await send_whatsapp_message(business_phone_number_id, message_from, message_text, message_id)
+                    await mark_message_as_read(business_phone_number_id, message_id)
+                    await send_whatsapp_message(business_phone_number_id, message_from, message_text, message_id)
+
+                elif 'statuses' in value:
+                    status = Status(**value['statuses'][0])
+                    print(f"Status update: {status.status} for message {status.id}")
 
 
-    return {"status": "success"}
+
+        return {"status": "success"}
+    except Exception as e:
+        print(f"Error processing WhatsApp webhook: {str(e)}")
+        raise HTTPException(status_code=400, detail="Error processing WhatsApp webhook")
 
 
 
