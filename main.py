@@ -204,7 +204,7 @@ async def webhook(body: Request):
 
     if not message:
         try:
-            status = body.entry[0].changes[0].statuses[0].status
+            status = body.changes[0].statuses[0].status
             print(f"Status update: {status}")
             return {"status": "success"}
         except Exception as e:
