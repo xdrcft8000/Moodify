@@ -7,6 +7,7 @@ from typing import List, Optional, Dict, Any
 
 #PYDANTIC REQUEST MODELS
 
+# Model for status updates
 class Status(BaseModel):
     id: str
     status: str
@@ -15,6 +16,7 @@ class Status(BaseModel):
     conversation: Optional[Dict] = None
     pricing: Optional[Dict] = None
 
+# Model for messages
 class Message(BaseModel):
     id: str
     from_: str = Field(..., alias='from')
@@ -23,49 +25,44 @@ class Message(BaseModel):
     text: Optional[Dict] = None
     button: Optional[Dict] = None
     audio: Optional[Dict] = None
+    context: Optional[Dict] = None  # Some messages contain a context
 
+# Model for metadata
 class Metadata(BaseModel):
     display_phone_number: str
     phone_number_id: str
 
+# Model for contact profile
 class Profile(BaseModel):
     name: str
 
-
+# Model for contact
 class Contact(BaseModel):
     profile: Profile
     wa_id: str
 
-
+# Model for value containing messages, statuses, and contacts
 class Value(BaseModel):
     messaging_product: str
     metadata: Metadata
     messages: Optional[List[Message]] = None
     statuses: Optional[List[Status]] = None
-    contacts: Optional[List[Contact]] = None  # Added contacts here
+    contacts: Optional[List[Contact]] = None
 
-
+# Model for change
 class Change(BaseModel):
     field: str
     value: Value
 
-    @field_validator('value')
-    def check_value(cls, v):
-        if 'statuses' not in v and 'messages' not in v:
-            raise ValueError("Neither 'statuses' nor 'messages' found in value")
-        return v
-
+# Model for entry
 class Entry(BaseModel):
     id: str
     changes: List[Change]
 
+# Main request model
 class WebhookRequest(BaseModel):
     object: str
     entry: List[Entry]
-
-class WhatsappWebhook(BaseModel):
-    body: WebhookRequest
-    
 
 
 
