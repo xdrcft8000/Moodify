@@ -45,6 +45,7 @@ def create_item_in_db(db: Session, item):
         db.refresh(item)
         return {"status": "success", "data": item}
     except SQLAlchemyError as e:
+        print('Error:', str(e), 'Rolling back')
         db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -55,6 +56,7 @@ def create_item_in_db_internal(db: Session, item):
         db.refresh(item)
         return item
     except Exception as e:
+        print('Error:', str(e), 'Rolling back')
         db.rollback()
         raise HTTPException(status_code=400, detail=f"Failed to create item: {str(e)}")
 
@@ -186,9 +188,11 @@ def init_openai():
 
 #Called when a message or update is received from WhatsApp
 @app.post("/whatsapp/webhook")
-async def webhook(body: WhatsAppWebhookBody):
+async def webhook(body: Request):
     print('webhook post')
     # Attempt to read the Request
+    print(body)
+    body = await body.json()
     print(body)
     try:
         message = body.entry[0].changes[0].value.messages[0]
@@ -203,8 +207,13 @@ async def webhook(body: WhatsAppWebhookBody):
     elif message.type == "audio":
         print('Audio message')
         message_text = await process_audio_message(message)
+    elif message.type == "button":
+        print('Begin button')
+        message_text = "Thank you for pressing a button"
     else:
         print('Message type:', message.type)
+        return {"status": "success"}
+
     
     await mark_message_as_read(business_phone_number_id, message.id)
     await send_whatsapp_message(business_phone_number_id, message.from_, message_text, message.id)
