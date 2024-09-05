@@ -223,6 +223,9 @@ async def webhook(body: Request):
         elif message.type == "button":
             print('Begin button')
             message_text = "Thank you for pressing a button"
+            button_payload = message.button.payload
+            if button_payload == "Begin":
+                message_text = "Let's start the questionnaire"
         else:
             print('Message type:', message.type)
             return {"status": "success"}
