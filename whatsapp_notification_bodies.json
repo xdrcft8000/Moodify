@@ -1,0 +1,253 @@
+READ
+
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+      {
+        "id": "450475618141543",
+        "changes": [
+          {
+            "value": {
+              "messaging_product": "whatsapp",
+              "metadata": {
+                "display_phone_number": "447538316929",
+                "phone_number_id": "390519764148405"
+              },
+              "statuses": [
+                {
+                  "id": "wamid.HBgMNDQ3NDI5OTY4NDYyFQIAERgSNzM5Mjk4M0RBMzA1NjQ1RkYxAA==",
+                  "status": "read",
+                  "timestamp": "1725562587",
+                  "recipient_id": "447429968462"
+                }
+              ]
+            },
+            "field": "messages"
+          }
+        ]
+      }
+    ]
+  }
+  
+SENT
+
+    {
+    "object": "whatsapp_business_account",
+    "entry": [
+      {
+        "id": "450475618141543",
+        "changes": [
+          {
+            "value": {
+              "messaging_product": "whatsapp",
+              "metadata": {
+                "display_phone_number": "447538316929",
+                "phone_number_id": "390519764148405"
+              },
+              "statuses": [
+                {
+                  "id": "wamid.HBgMNDQ3NDI5OTY4NDYyFQIAERgSNzM5Mjk4M0RBMzA1NjQ1RkYxAA==",
+                  "status": "sent",
+                  "timestamp": "1725562586",
+                  "recipient_id": "447429968462",
+                  "conversation": {
+                    "id": "ee0f110ba39aff1e8e1cfe912bf1b495",
+                    "expiration_timestamp": "1725567000",
+                    "origin": {
+                      "type": "marketing"
+                    }
+                  },
+                  "pricing": {
+                    "billable": true,
+                    "pricing_model": "CBP",
+                    "category": "marketing"
+                  }
+                }
+              ]
+            },
+            "field": "messages"
+          }
+        ]
+      }
+    ]
+  }
+  
+
+DELIVERED
+
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+      {
+        "id": "450475618141543",
+        "changes": [
+          {
+            "value": {
+              "messaging_product": "whatsapp",
+              "metadata": {
+                "display_phone_number": "447538316929",
+                "phone_number_id": "390519764148405"
+              },
+              "statuses": [
+                {
+                  "id": "wamid.HBgMNDQ3NDI5OTY4NDYyFQIAERgSNzM5Mjk4M0RBMzA1NjQ1RkYxAA==",
+                  "status": "delivered",
+                  "timestamp": "1725562587",
+                  "recipient_id": "447429968462",
+                  "conversation": {
+                    "id": "ee0f110ba39aff1e8e1cfe912bf1b495",
+                    "origin": {
+                      "type": "marketing"
+                    }
+                  },
+                  "pricing": {
+                    "billable": true,
+                    "pricing_model": "CBP",
+                    "category": "marketing"
+                  }
+                }
+              ]
+            },
+            "field": "messages"
+          }
+        ]
+      }
+    ]
+  }
+
+
+BUTTON
+
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+      {
+        "id": "450475618141543",
+        "changes": [
+          {
+            "value": {
+              "messaging_product": "whatsapp",
+              "metadata": {
+                "display_phone_number": "447538316929",
+                "phone_number_id": "390519764148405"
+              },
+              "contacts": [
+                {
+                  "profile": {
+                    "name": "Tayyeb"
+                  },
+                  "wa_id": "447429968462"
+                }
+              ],
+              "messages": [
+                {
+                  "context": {
+                    "from": "447538316929",
+                    "id": "wamid.HBgMNDQ3NDI5OTY4NDYyFQIAERgSMTVDQ0JBMjNCMzFBM0FEMjE4AA=="
+                  },
+                  "from": "447429968462",
+                  "id": "wamid.HBgMNDQ3NDI5OTY4NDYyFQIAEhgUM0ExRTVBOUZDRUUzQ0NEQ0VCRjIA",
+                  "timestamp": "1725562584",
+                  "type": "button",
+                  "button": {
+                    "payload": "Begin",
+                    "text": "Begin"
+                  }
+                }
+              ]
+            },
+            "field": "messages"
+          }
+        ]
+      }
+    ]
+  }
+
+
+MESSAGE
+
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+      {
+        "id": "450475618141543",
+        "changes": [
+          {
+            "value": {
+              "messaging_product": "whatsapp",
+              "metadata": {
+                "display_phone_number": "447538316929",
+                "phone_number_id": "390519764148405"
+              },
+              "contacts": [
+                {
+                  "profile": {
+                    "name": "Tayyeb"
+                  },
+                  "wa_id": "447429968462"
+                }
+              ],
+              "messages": [
+                {
+                  "from": "447429968462",
+                  "id": "wamid.HBgMNDQ3NDI5OTY4NDYyFQIAEhgUM0FFQzdFMzU2QjJGMEFFMzIwNUYA",
+                  "timestamp": "1725562996",
+                  "text": {
+                    "body": "Hi mate"
+                  },
+                  "type": "text"
+                }
+              ]
+            },
+            "field": "messages"
+          }
+        ]
+      }
+    ]
+  }
+  
+AUDIO
+
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+      {
+        "id": "450475618141543",
+        "changes": [
+          {
+            "value": {
+              "messaging_product": "whatsapp",
+              "metadata": {
+                "display_phone_number": "447538316929",
+                "phone_number_id": "390519764148405"
+              },
+              "contacts": [
+                {
+                  "profile": {
+                    "name": "Tayyeb"
+                  },
+                  "wa_id": "447429968462"
+                }
+              ],
+              "messages": [
+                {
+                  "from": "447429968462",
+                  "id": "wamid.HBgMNDQ3NDI5OTY4NDYyFQIAEhgUM0E5OUFCREJENjk4OUY5MDQwRDUA",
+                  "timestamp": "1725563467",
+                  "type": "audio",
+                  "audio": {
+                    "mime_type": "audio/ogg; codecs=opus",
+                    "sha256": "heTWiWCqYUwxwlwc8yW+lkkL3GigKJpV2jF9p6jn1G4=",
+                    "id": "869475095383266",
+                    "voice": true
+                  }
+                }
+              ]
+            },
+            "field": "messages"
+          }
+        ]
+      }
+    ]
+  }
+  

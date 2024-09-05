@@ -216,8 +216,8 @@ async def whatsapp_notify_webhook(request: WebhookRequest):
                     await mark_message_as_read(business_phone_number_id, message_id)
                     await send_whatsapp_message(business_phone_number_id, message_from, message_text, message_id)
 
-                elif 'statuses' in value:
-                    status = Status(**value['statuses'][0])
+                elif value.statuses:
+                    status = value.statuses[0]
                     print(f"Status update: {status.status} for message {status.id}")
 
         return {"status": "success"}
