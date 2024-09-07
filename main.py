@@ -123,7 +123,8 @@ async def handle_incoming_message(patient_id: int, message_text: str, message_id
         if not parsed_response:
             await ask_for_clarication(patient_id, conversation.id, db, questionnaire)
             return
-        validation_response = await range_check_response(parsed_response, questionnaire)
+        validation_response = range_check_response(parsed_response, questionnaire)
+        print(f"Validation response: {validation_response}")
         if validation_response != "Valid":
             await send_whatsapp_message(patient_id, conversation.id, validation_response, db)
             return
@@ -183,18 +184,23 @@ async def ask_for_clarication(patient_id: int, conversation_id: int, db: Session
     help_text = f"I didn't understand that. {help_text} \n\n You can respond with 'skip' to skip the question or 'end' if you'd like to end the questionnaire early."
     await send_whatsapp_message(patient_id, conversation_id, help_text, db)
 
-async def range_check_response(answer: str, questionnaire: Questionnaire):
+def range_check_response(answer: str, questionnaire: Questionnaire):
+    print(f"Range checking response: {answer}")
     current_index = int(questionnaire.current_status)
+    print(f"Current index: {current_index}")
     questions = questionnaire.questions["questions_list"]
     answer = int(answer)
+    print(f"Answer: {answer}")
     for question in questions:
         if question["index"] == current_index:
             response_format = question["response_format"]
             break
     answer_scheme = questionnaire.questions["answer_schemes"][response_format]
-    if range in answer_scheme:
+    if "range" in answer_scheme:
+        print(f"Range is in Answer scheme: {answer_scheme}")
         start = answer_scheme["range"]["start"]
         end = answer_scheme["range"]["end"]
+        print(f"Start: {start}, End: {end}")
         if start <= answer <= end:
             return "Valid"
         else:
@@ -224,7 +230,7 @@ async def ask_question(questionnaire: Questionnaire, conversation_id: int, patie
 
 async def answer_question(answer: str, conversation: Conversation, questionnaire: Questionnaire, message_id: str, db: Session, skipped = False):
     emoji = "⏭️" if skipped else "👍"
-    react_to_message(questionnaire.patient_id, message_id, emoji, db)
+    await react_to_message(questionnaire.patient_id, message_id, emoji, db)
     current_index = int(questionnaire.current_status)
     for question in questionnaire.questions["questions_list"]:
         if question["index"] == current_index:
@@ -261,7 +267,7 @@ def cancel_questionnaire(conversation: Conversation, questionnaire: Questionnair
                            db,
                            message_id)
 
-def get_patient_relations(patient_id:int, db: Session):
+async def get_patient_relations(patient_id:int, db: Session):
     try:
         patient = db.query(Patient).filter(Patient.id == patient_id).first()
         if not patient:
@@ -289,7 +295,7 @@ def get_patient_relations(patient_id:int, db: Session):
 async def send_whatsapp_message(patient_id: int, conversation_id: int, message_text: str, db: Session, context_message_id = None, logging = True):
     try:
         print(f"Sending message: {message_text}")
-        patient, user, team = get_patient_relations(patient_id, db)
+        patient, user, team = await get_patient_relations(patient_id, db)
         recipient_number = patient.phone_number
         business_phone_number_id = team.whatsapp_number_id
 
@@ -317,7 +323,7 @@ async def send_whatsapp_message(patient_id: int, conversation_id: int, message_t
 
 
 async def send_whatsapp_begin_questionnaire_template(patient_id, conversation_id, duration,db: Session):
-    patient, user, team = get_patient_relations(patient_id, db)
+    patient, user, team = await get_patient_relations(patient_id, db)
 
     try:
         async with httpx.AsyncClient() as client:
@@ -390,7 +396,7 @@ async def mark_message_as_read(business_phone_number_id: str, message_id):
 
 
 async def react_to_message(patient_id: int, message_id: str, emoji: str, db: Session):
-    patient, user, team = get_patient_relations(patient_id, db)
+    patient, user, team = await get_patient_relations(patient_id, db)
     business_phone_number_id = team.whatsapp_number_id
 
     try:
