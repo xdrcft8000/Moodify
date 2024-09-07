@@ -1,3 +1,4 @@
+import copy
 import traceback
 from fastapi import FastAPI, HTTPException, Depends
 from sqlalchemy.orm import Session
@@ -122,7 +123,8 @@ async def handle_incoming_message(patient_id: int, message_text: str, message_id
         log_chat_message(conversation.id, patient_id, message_text, "user", db)
         questionnaire = db.query(Questionnaire).filter(Questionnaire.patient_id == patient_id).order_by(Questionnaire.created_at.desc()).first()
         parsed_response = await parse_message_text(message_text)
-        if not parsed_response:
+        if parsed_response is None:
+            print("parsed_response is None")
             await ask_for_clarication(patient_id, conversation.id, db, questionnaire)
             return
         validation_response = range_check_response(parsed_response, questionnaire)
@@ -140,7 +142,7 @@ async def handle_incoming_message(patient_id: int, message_text: str, message_id
         # Save the message as a comment
         log_chat_message(conversation_awaiting_feedback.id, patient_id, message_text, "user", db)
         questionnaire = db.query(Questionnaire).filter(Questionnaire.id == conversation_awaiting_feedback.questionnaire_id).first()
-        questions = questionnaire.questions
+        questions = copy.deepcopy(questionnaire.questions)
         if "comments" not in questions:
             questions["comments"] = []
         questions["comments"].append(message_text)
@@ -151,7 +153,7 @@ async def handle_incoming_message(patient_id: int, message_text: str, message_id
 
     elif most_recent_conversation:
         log_chat_message(most_recent_conversation.id, patient_id, message_text, "user", db)
-        await send_whatsapp_message(patient_id, most_recent_conversation.id, "Thank you for sharing! We currently don't process any messages unless they're part of a questionnaire. \n\n Hang tight, your clinician will send another one soon.", db)
+        await send_whatsapp_message(patient_id, most_recent_conversation.id, "Thank you for sharing! We currently don't process any messages unless they're part of a questionnaire. \n\nHang tight, your clinician will send another one soon.", db)
         db.commit()
 
     else:
@@ -185,7 +187,7 @@ async def handle_begin_button(patient_id: int, db: Session):
 
 async def ask_for_clarication(patient_id: int, conversation_id: int, db: Session, questionnaire: Questionnaire):
     help_text = questionnaire.questions["answer_schemes"][questionnaire.current_status]["explanation"]
-    help_text = f"I didn't understand that. {help_text} \n\n You can respond with 'skip' to skip the question or 'end' if you'd like to end the questionnaire early."
+    help_text = f"I didn't understand that. {help_text} \n\nYou can respond with 'skip' to skip the question or 'end' if you'd like to end the questionnaire early."
     await send_whatsapp_message(patient_id, conversation_id, help_text, db)
 
 def range_check_response(answer: str, questionnaire: Questionnaire):
@@ -237,10 +239,10 @@ async def answer_question(answer: str, conversation: Conversation, questionnaire
     await react_to_message(questionnaire.patient_id, message_id, emoji, db)
     current_index = int(questionnaire.current_status)
     
-    questions = questionnaire.questions
+    questions = copy.deepcopy(questionnaire.questions)
     for question in questions["questions_list"]:
         if question["index"] == current_index:
-            question["answer"] = answer
+            question["answer"] = str(answer)
             break
     
     questionnaire.questions = questions
@@ -262,7 +264,7 @@ async def finish_questionnaire(conversation: Conversation, questionnaire: Questi
     db.commit()
     await send_whatsapp_message(questionnaire.patient_id,
                            conversation.id,
-                           "*Thank you for completing the questionnaire!*🎉  \n We'll send your clinician a summary of your responses. If you have anything else you want to say about how you're in the meantime, you can respond here. \n\n Take care!",
+                           "*Thank you for completing the questionnaire!*🎉  \n\nWe'll send your clinician a summary of your responses. If you have anything else you want to say about how you're in the meantime, you can respond here. \n\n Take care!",
                            db)
 
 async def cancel_questionnaire(conversation: Conversation, questionnaire: Questionnaire, message_id: str, db: Session):
@@ -272,7 +274,7 @@ async def cancel_questionnaire(conversation: Conversation, questionnaire: Questi
     db.commit()
     await send_whatsapp_message(questionnaire.patient_id,
                            conversation.id,
-                           "Got you, we'll stop here. \n\nWe'll send your clinician a summary of your responses so far. If you have any feedback in the meantime, you can send a message or a voice note here. \n\n Take care!",
+                           "Got you, we'll stop here.\n\nWe'll send your clinician a summary of your responses so far. If you have any feedback in the meantime, you can send a message or a voice note here. \n\n Take care!",
                            db,
                            message_id)
 
@@ -472,7 +474,12 @@ async def parse_message_text(message_text: str) -> str | None:
         text_to_num = {
             "zero": 0, "one": 1, "two": 2, "three": 3,
             "four": 4, "five": 5, "six": 6, "seven": 7,
-            "eight": 8, "nine": 9, "ten": 10
+            "eight": 8, "nine": 9, "ten": 10,
+            "0️⃣": 0, "1️⃣": 1, "2️⃣": 2, "3️⃣": 3,
+            "4️⃣": 4, "5️⃣": 5, "6️⃣": 6, "7️⃣": 7,
+            "8️⃣": 8, "9️⃣": 9, "🔟": 10,
+            "zerro": 0, "wun": 1, "too": 2, "tre": 3, "thre": 3, "fore": 4,
+            "fiv": 5, "sixe": 6, "sevn": 7, "eigt": 8, "nien": 9
         }
         result = text_to_num.get(message_text)
         if result is not None:
@@ -489,6 +496,8 @@ async def parse_message_text(message_text: str) -> str | None:
         )
         interpreted_text = response.choices[0].message.content.strip().lower()
         print(interpreted_text)
+        if interpreted_text is None or interpreted_text == 'none':
+            return None
         if interpreted_text == 0 or "0":
             print("interpreted_text is 0")
             return "0"
@@ -644,6 +653,9 @@ async def transcribe_audio(ogg_bytes: bytes) -> str:
         return None
     except httpx.HTTPStatusError as e:
         print(f"Error response {e.response.status_code} while requesting {e.request.url!r}: {str(e)}")
+        return None
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
         return None
     except Exception as e:
         print(f"An error occurred: {str(e)}")
