@@ -1,4 +1,3 @@
-import asyncio
 from fastapi import FastAPI, HTTPException, Depends
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta, timezone
@@ -6,9 +5,6 @@ from fastapi import FastAPI, Header, Request, HTTPException, Query
 import httpx
 import os
 from googleapiclient.discovery import build
-import re
-import time
-import logging
 from fastapi.responses import JSONResponse, Response
 from supabase import create_client, Client
 from sqlalchemy.exc import SQLAlchemyError
@@ -28,20 +24,13 @@ from core import *
 # ++++++++++ WHATSAPP +++++++++++
 # +++++++++++++++++++++++++++++++
 
-from openai import OpenAI
-from pydub import AudioSegment
-from io import BytesIO
-import io
-import tempfile
-import json
-
 
 WHATSAPP_WEBHOOK_VERIFY_TOKEN = os.getenv("WHATSAPP_WEBHOOK_VERIFY_TOKEN")
 WHATSAPP_GRAPH_API_TOKEN = os.getenv("WHATSAPP_GRAPH_API_TOKEN")
 
 #Inital route that verifies the webhook
 @app.get("/whatsapp/webhook")
-async def verify_webhook(request: Request):
+async def whatsapp_verify_webhook(request: Request):
     mode = request.query_params.get("hub.mode")
     token = request.query_params.get("hub.verify_token")
     challenge = request.query_params.get("hub.challenge")
@@ -67,7 +56,7 @@ async def whatsapp_notify_webhook(request: WebhookRequest, db: Session = Depends
                     if not patient:
                         print("ERROR: Recieved message from unknown patient")
                         raise HTTPException(status_code=400, detail="ERROR: Recieved message from unknown patient")
-
+                    print(f"Patient: {patient}")
                     if message.type == 'text':
                         print(f"Text message: {message.text['body']}")
                         message_text = message.text['body']
@@ -162,7 +151,7 @@ def handle_incoming_message(patient_id: int, message_text: str, message_id: str,
         send_whatsapp_message(patient_id, "We have no record of you as a patient. Please contact your mental health care provider to get started.", db)
 
 
-def handle_begin_button(patient_id, db: Session):
+def handle_begin_button(patient_id: int, db: Session):
 
     # Get the most recent conversation with status "Initiated"
     conversation = db.query(Conversation).filter(
@@ -251,6 +240,7 @@ def get_patient_relations(patient_id:int, db: Session):
         if not patient:
             print("Error in get_patient_relations: Patient not found")
             raise Exception("Error in get_patient_relations: Patient not found")
+        print('found patient')
         if patient.assigned_to is None:
             print("Error in get_patient_relations: Patient not assigned to any user")
             raise Exception("Error in get_patient_relations: Patient not assigned to any user")
@@ -258,16 +248,18 @@ def get_patient_relations(patient_id:int, db: Session):
         if not user:
             print("Error in get_patient_relations: User not found")
             raise Exception("Error in get_patient_relations: User not found")
+        print('found user')
         team = db.query(Team).filter(Team.id == user.team_id).first()
         if not team:
             print("Error in get_patient_relations: Team not found")
             raise Exception("Error in get_patient_relations: Team not found")
+        print('found team')
         return patient, user, team
     except Exception as e:
         print(f"Error in get_patient_relations: {str(e)}")
         raise
 
-async def send_whatsapp_message(patient_id: int, conversation_id: int, message_text,db: Session, context_message_id = None, logging = True):
+async def send_whatsapp_message(patient_id: int, conversation_id: int, message_text: str, db: Session, context_message_id = None, logging = True):
     try:
         patient, user, team = get_patient_relations(patient_id, db)
         recipient_number = patient.phone_number
