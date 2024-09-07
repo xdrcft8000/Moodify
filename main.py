@@ -1,3 +1,4 @@
+import traceback
 from fastapi import FastAPI, HTTPException, Depends
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta, timezone
@@ -87,6 +88,7 @@ async def whatsapp_notify_webhook(request: WebhookRequest, db: Session = Depends
         return {"status": "success"}
     except Exception as e:
         print(f"Error processing WhatsApp webhook: {str(e)}")
+        print(f"Full error details: {traceback.format_exc()}")
         return {"status": "success"}
 
 def get_patient_from_phone_number(phone_number: str, db: Session):
@@ -421,6 +423,9 @@ async def parse_message_text(message_text: str) -> str | None:
         return message_text
 
     try:
+        if message_text == "0":
+            return "0"
+
         if message_text.isdigit():
             return int(message_text)
         
@@ -436,7 +441,7 @@ async def parse_message_text(message_text: str) -> str | None:
         # If we reach here, use OpenAI to interpret the message
         chat_gpt = init_openai()
         response = chat_gpt.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4o",
             messages=[
                 {"role": "system", "content": "You are an assistant that interprets user messages. If the user intends to say a number (0-10), 'skip', or 'end', respond with just that word or number. For typos or wordy messages, interpret the likely intent. If the user doesn't intend any of these, respond with 'None'. Examples: 'I want to stop' -> end, 'Let's move on' -> skip, 'I feel about a seven today' -> 7, 'I had toast for breakfast' -> None. Response with only the desired string without any other text or any quotation marks."},
                 {"role": "user", "content": message_text}
