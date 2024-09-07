@@ -125,7 +125,7 @@ async def handle_incoming_message(patient_id: int, message_text: str, message_id
         parsed_response = await parse_message_text(message_text)
         if parsed_response is None:
             print("parsed_response is None")
-            await ask_for_clarication(patient_id, conversation.id, db, questionnaire)
+            await ask_for_clarication(patient_id, conversation.id, questionnaire, message_id, db)
             return
         print('if parsed response is None this shouldnt happen')
         validation_response = range_check_response(parsed_response, questionnaire)
@@ -186,12 +186,12 @@ async def handle_begin_button(patient_id: int, db: Session):
         print("No initiated conversation found for 'Begin' button")
 
 
-async def ask_for_clarication(patient_id: int, conversation_id: int, db: Session, questionnaire: Questionnaire):
+async def ask_for_clarication(patient_id: int, conversation_id: int, questionnaire: Questionnaire, message_id: str, db: Session):
     question = questionnaire_get_current_question(questionnaire)
     answer_scheme = question["response_format"]
     explanation = questionnaire.questions["answer_schemes"][answer_scheme]["explanation"]
     help_text = f"I didn't understand that. {explanation} \n\nYou can respond with 'skip' to skip the question or 'end' if you'd like to end the questionnaire early."
-    await send_whatsapp_message(patient_id, conversation_id, help_text, db)
+    await send_whatsapp_message(patient_id, conversation_id, help_text, db, message_id)
 
 
 def range_check_response(answer: str, questionnaire: Questionnaire):
