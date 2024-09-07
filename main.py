@@ -55,7 +55,7 @@ async def whatsapp_notify_webhook(request: WebhookRequest, db: Session = Depends
                     patient = get_patient_from_phone_number(message.from_, db)
                     if not patient:
                         print("ERROR: Recieved message from unknown patient")
-                        raise HTTPException(status_code=400, detail="ERROR: Recieved message from unknown patient")
+                        return {"status": "success"}
                     print(f"Patient: {patient}")
                     if message.type == 'text':
                         print(f"Text message: {message.text['body']}")
@@ -79,7 +79,6 @@ async def whatsapp_notify_webhook(request: WebhookRequest, db: Session = Depends
                     message_from = message.from_
 
                     await mark_message_as_read(business_phone_number_id, message_id)
-                    await send_whatsapp_message(business_phone_number_id, message_from, message_text, message_id)
 
                 elif value.statuses:
                     status = value.statuses[0]
@@ -88,7 +87,7 @@ async def whatsapp_notify_webhook(request: WebhookRequest, db: Session = Depends
         return {"status": "success"}
     except Exception as e:
         print(f"Error processing WhatsApp webhook: {str(e)}")
-        raise HTTPException(status_code=400, detail="Error processing WhatsApp webhook")
+        return {"status": "success"}
 
 def get_patient_from_phone_number(phone_number: str, db: Session):
     return db.query(Patient).filter(Patient.phone_number == phone_number).first()
