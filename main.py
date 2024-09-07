@@ -215,12 +215,12 @@ async def whatsapp_notify_webhook(request: WebhookRequest, db: Session = Depends
                     if message.type == 'text':
                         print(f"Text message: {message.text['body']}")
                         message_text = message.text['body']
-                        handle_incoming_message(patient.id, message_text, db)
+                        handle_incoming_message(patient.id, message_text, message.id, db)
 
                     elif message.type == 'audio':
                         print(f"Audio message: {message.audio}")
                         message_text = await process_audio_message(message)
-                        handle_incoming_message(patient.id, message_text, db)
+                        handle_incoming_message(patient.id, message_text, message.id, db)
 
                     elif message.type == 'button':
                         print(f"Button pressed: {message.button['payload']}")
