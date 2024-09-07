@@ -121,9 +121,12 @@ async def handle_incoming_message(patient_id: int, message_text: str, message_id
         questionnaire = db.query(Questionnaire).filter(Questionnaire.patient_id == patient_id).order_by(Questionnaire.created_at.desc()).first()
         parsed_response = await parse_message_text(message_text)
         if not parsed_response:
-            ask_for_clarication(patient_id, conversation.id, db, questionnaire)
+            await ask_for_clarication(patient_id, conversation.id, db, questionnaire)
             return
-
+        validation_response = await range_check_response(parsed_response, questionnaire)
+        if validation_response != "Valid":
+            await send_whatsapp_message(patient_id, conversation.id, validation_response, db)
+            return
         skipped = parsed_response == "skip"
         if parsed_response == "end":
             cancel_questionnaire(conversation, questionnaire, message_id, db)
@@ -175,10 +178,27 @@ async def handle_begin_button(patient_id: int, db: Session):
         print("No initiated conversation found for 'Begin' button")
 
 
-def ask_for_clarication(patient_id: int, conversation_id: int, db: Session, questionnaire: Questionnaire):
+async def ask_for_clarication(patient_id: int, conversation_id: int, db: Session, questionnaire: Questionnaire):
     help_text = questionnaire.questions["answer_schemes"][questionnaire.current_status]["explanation"]
     help_text = f"I didn't understand that. {help_text} \n\n You can respond with 'skip' to skip the question or 'end' if you'd like to end the questionnaire early."
-    send_whatsapp_message(patient_id, conversation_id, help_text, db)
+    await send_whatsapp_message(patient_id, conversation_id, help_text, db)
+
+async def range_check_response(answer: str, questionnaire: Questionnaire):
+    current_index = int(questionnaire.current_status)
+    questions = questionnaire.questions["questions_list"]
+    answer = int(answer)
+    for question in questions:
+        if question["index"] == current_index:
+            response_format = question["response_format"]
+            break
+    if range in questions["answer_schemes"][response_format]:
+        start = questions["answer_schemes"][response_format]["range"]["start"]
+        end = questions["answer_schemes"][response_format]["range"]["end"]
+        if start <= answer <= end:
+            return "Valid"
+        else:
+            return f"{questions['answer_schemes'][response_format]['explanation']}. \n\n You can respond with 'skip' to skip the question or 'end' if you'd like to end the questionnaire early."
+    return "Valid"
 
 async def ask_question(questionnaire: Questionnaire, conversation_id: int, patient_id: int, db: Session):
     current_question_index = int(questionnaire.current_status)
