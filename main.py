@@ -138,11 +138,13 @@ async def handle_incoming_message(patient_id: int, message_text: str, message_id
         # Save the message as a comment
         log_chat_message(conversation_awaiting_feedback.id, patient_id, message_text, "user", db)
         questionnaire = db.query(Questionnaire).filter(Questionnaire.id == conversation_awaiting_feedback.questionnaire_id).first()
-        if "comments" not in questionnaire.questions:
-            questionnaire.questions["comments"] = []
-        questionnaire.questions["comments"].append(message_text)
-        await send_whatsapp_message(patient_id, conversation_awaiting_feedback.id, "Thank you for sharing, your message has been saved for your clinician to review.", db)
+        questions = questionnaire.questions
+        if "comments" not in questions:
+            questions["comments"] = []
+        questions["comments"].append(message_text)
+        questionnaire.questions = questions
         db.commit()
+        await send_whatsapp_message(patient_id, conversation_awaiting_feedback.id, "Thank you for sharing, your message has been saved for your clinician to review.", db)
 
 
     elif most_recent_conversation:
@@ -232,14 +234,18 @@ async def answer_question(answer: str, conversation: Conversation, questionnaire
     emoji = "⏭️" if skipped else "👍"
     await react_to_message(questionnaire.patient_id, message_id, emoji, db)
     current_index = int(questionnaire.current_status)
-    for question in questionnaire.questions["questions_list"]:
+    
+    questions = questionnaire.questions
+    for question in questions["questions_list"]:
         if question["index"] == current_index:
             question["answer"] = answer
             break
+    
+    questionnaire.questions = questions
+    
     db.commit()
-    print(f"Current index: {current_index}")
-    print(f"Questions list length: {len(questionnaire.questions['questions_list'])}")
-    if current_index == len(questionnaire.questions["questions_list"]) - 1:
+    
+    if current_index == len(questions["questions_list"]) - 1:
         await finish_questionnaire(conversation, questionnaire, db)
     else:
         questionnaire.current_status = str(current_index + 1)
@@ -264,7 +270,7 @@ async def cancel_questionnaire(conversation: Conversation, questionnaire: Questi
     db.commit()
     await send_whatsapp_message(questionnaire.patient_id,
                            conversation.id,
-                           "Got you, we'll stop here. \n\n We'll send your clinician a summary of your responses so far. If you have any feedback in the meantime, you can send a message or a voice note here. \n\n Take care!",
+                           "Got you, we'll stop here. \n\nWe'll send your clinician a summary of your responses so far. If you have any feedback in the meantime, you can send a message or a voice note here. \n\n Take care!",
                            db,
                            message_id)
 
@@ -482,14 +488,19 @@ async def parse_message_text(message_text: str) -> str | None:
         interpreted_text = response.choices[0].message.content.strip().lower()
         print(interpreted_text)
         if interpreted_text == 0 or "0":
+            print("interpreted_text is 0")
             return "0"
         if interpreted_text.isdigit():
+            print("interpreted_text is a digit")
             return int(interpreted_text)
         elif interpreted_text in ["skip", "end"]:
+            print("interpreted_text is skip or end")
             return interpreted_text
         else:
+            print("interpreted_text is None")
             return None
     except ValueError:
+        print("ValueError")
         return None
     
 
