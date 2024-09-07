@@ -94,6 +94,8 @@ async def whatsapp_notify_webhook(request: WebhookRequest, db: Session = Depends
 def get_patient_from_phone_number(phone_number: str, db: Session):
     return db.query(Patient).filter(Patient.phone_number == phone_number).first()
 
+
+
 async def handle_incoming_message(patient_id: int, message_text: str, message_id: str, db: Session):
     
     conversation = db.query(Conversation).filter(
@@ -144,7 +146,7 @@ async def handle_incoming_message(patient_id: int, message_text: str, message_id
         questions["comments"].append(message_text)
         questionnaire.questions = questions
         db.commit()
-        await send_whatsapp_message(patient_id, conversation_awaiting_feedback.id, "Thank you for sharing, your message has been saved for your clinician to review.", db)
+        await send_whatsapp_message(patient_id, conversation_awaiting_feedback.id, "Thank you for sharing, your message has been saved for your clinician to review.", message_id,db)
 
 
     elif most_recent_conversation:
