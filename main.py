@@ -130,7 +130,7 @@ async def handle_incoming_message(patient_id: int, message_text: str, message_id
             return
         skipped = parsed_response == "skip"
         if parsed_response == "end":
-            cancel_questionnaire(conversation, questionnaire, message_id, db)
+            await cancel_questionnaire(conversation, questionnaire, message_id, db)
         else:
             await answer_question(parsed_response, conversation, questionnaire, message_id, db, skipped)
 
@@ -147,13 +147,13 @@ async def handle_incoming_message(patient_id: int, message_text: str, message_id
 
     elif most_recent_conversation:
         log_chat_message(most_recent_conversation.id, patient_id, message_text, "user", db)
-        send_whatsapp_message(patient_id, most_recent_conversation.id, "Thank you for sharing! We currently don't process any messages unless they're part of a questionnaire. \n\n Hang tight, your clinician will send another one soon.", db)
+        await send_whatsapp_message(patient_id, most_recent_conversation.id, "Thank you for sharing! We currently don't process any messages unless they're part of a questionnaire. \n\n Hang tight, your clinician will send another one soon.", db)
         db.commit()
 
     else:
     #LATER NEED TO HANDLE THE CASE WHERE THERE IS NO IN PROGRESS QUESTIONNAIRE
         print("No conversation found")
-        send_whatsapp_message(patient_id, "We have no record of you as a patient. Please contact your mental health care provider to get started.", db)
+        await send_whatsapp_message(patient_id, "We have no record of you as a patient. Please contact your mental health care provider to get started.", db)
 
 
 async def handle_begin_button(patient_id: int, db: Session):
