@@ -238,7 +238,7 @@ async def answer_question(answer: str, conversation: Conversation, questionnaire
             break
     db.commit()
     if current_index == len(questionnaire.questions["questions_list"]) - 1:
-        finish_questionnaire(conversation, questionnaire, message_id, db)
+        await finish_questionnaire(conversation, questionnaire, message_id, db)
     else:
         questionnaire.current_status = str(current_index + 1)
         db.commit()
