@@ -180,16 +180,21 @@ def ask_for_clarication(patient_id: int, conversation_id: int, db: Session, ques
 
 def ask_question(questionnaire: Questionnaire, conversation_id: int, patient_id: int, db: Session):
     current_question_index = int(questionnaire.current_status)
+    print(f"Asking question: {current_question_index}")
     questions = questionnaire.questions["questions_list"]
     question_text = ""
     for question in questions:
+        print(f"Question: {question}")
         index = question["index"]
         if index == current_question_index:
             question_text = question["text"]
             answer_scheme = question["response_format"]
+            print(f"Answer scheme: {answer_scheme}")
             break
     explanation = questionnaire.questions["answer_schemes"][answer_scheme]["explanation"]
+    print(f"Explanation: {explanation}")
     question_text = f"Question {current_question_index + 1}: {question_text}\n\n{explanation}"
+    print(f"Question text: {question_text}")
     send_whatsapp_message(questionnaire.patient_id, conversation_id, question_text, db)
 
 
@@ -260,6 +265,7 @@ def get_patient_relations(patient_id:int, db: Session):
 
 async def send_whatsapp_message(patient_id: int, conversation_id: int, message_text: str, db: Session, context_message_id = None, logging = True):
     try:
+        print(f"Sending message: {message_text}")
         patient, user, team = get_patient_relations(patient_id, db)
         recipient_number = patient.phone_number
         business_phone_number_id = team.whatsapp_number_id
