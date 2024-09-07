@@ -7,8 +7,9 @@ from googleapiclient.discovery import build
 from fastapi.responses import JSONResponse, Response
 from supabase import create_client, Client
 from sqlalchemy.exc import SQLAlchemyError
+from core import *
 from models import *
-from main import app
+from sqlalchemy import create_engine, MetaData, Table, inspect
 
 
 # ++++++++++++++++++++++++++++++
@@ -56,6 +57,53 @@ def create_item_in_db_internal(db: Session, item):
 def table_info_endpoint(db: Session = Depends(get_db)):
     table_info = get_table_info(db)
     return {"status": "success", "data": table_info}
+
+
+
+def get_table_info(db: Session) -> List[Dict[str, Any]]:
+    # Use SQLAlchemy's Inspector to fetch information directly from the database
+    inspector = inspect(db.bind)
+    
+    # Get a list of all table names in the database
+    table_names = inspector.get_table_names()
+    
+    table_info = []
+
+    # Loop through each table in the database
+    for table_name in table_names:
+        table_details = {
+            "table_name": table_name,
+            "columns": []
+        }
+        
+        # Get column information for each table
+        columns = inspector.get_columns(table_name)
+        for column in columns:
+            column_info = {
+                "name": column['name'],
+                "type": str(column['type']),
+                "nullable": column['nullable'],  # Whether the column can contain NULL values
+                "default": column.get('default'),  # The default value (if any)
+                "autoincrement": column.get('autoincrement', False),  # Auto-increment
+                "primary_key": column.get('primary_key', False),  # Primary key
+            }
+            
+            # Check for foreign key relationships
+            foreign_keys = inspector.get_foreign_keys(table_name)
+            column_info["foreign_key"] = None
+            for fk in foreign_keys:
+                for fk_column in fk['constrained_columns']:
+                    if fk_column == column['name']:
+                        column_info["foreign_key"] = {
+                            "referred_table": fk['referred_table'],
+                            "referred_column": fk['referred_columns'][0]
+                        }
+
+            table_details["columns"].append(column_info)
+        
+        table_info.append(table_details)
+    
+    return table_info
 
 # Helper function to create new objects
 @app.post("/db/new_team")

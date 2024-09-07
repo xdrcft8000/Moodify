@@ -17,11 +17,11 @@ key: str = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(url, key)
 from db import *
 from models import *
-
+from utils import *
+from core import *
 # from dotenv import load_dotenv
 # load_dotenv()
 
-app = FastAPI()
 
 
 # +++++++++++++++++++++++++++++++
@@ -38,11 +38,6 @@ import json
 
 WHATSAPP_WEBHOOK_VERIFY_TOKEN = os.getenv("WHATSAPP_WEBHOOK_VERIFY_TOKEN")
 WHATSAPP_GRAPH_API_TOKEN = os.getenv("WHATSAPP_GRAPH_API_TOKEN")
-OPENAI_KEY = os.getenv("OPENAI_KEY")
-
-def init_openai():
-    return OpenAI(api_key=os.getenv("OPENAI_KEY"))
-
 
 #Inital route that verifies the webhook
 @app.get("/whatsapp/webhook")

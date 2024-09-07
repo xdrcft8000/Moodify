@@ -1,6 +1,8 @@
 import os
 from pydantic import BaseModel, Field, RootModel, EmailStr, field_validator
 from typing import List, Optional, Dict, Any
+
+from core import Base
 # from dotenv import load_dotenv
 # load_dotenv()
 
@@ -74,55 +76,6 @@ class WebhookRequest(BaseModel):
     entry: List[Entry]
 
 
-
-# class Text(BaseModel):
-#     body: str
-
-# class Audio(BaseModel):
-#     id: str
-#     mime_type: str
-
-# class Message(BaseModel):
-#     from_: Optional[str] = Field(None, alias='from')
-#     id: Optional[str] = None
-#     timestamp: Optional[str] = None
-#     text: Optional[Text] = None
-#     type: Optional[str] = None
-#     audio: Optional[Audio] = None
-
-
-# class Profile(BaseModel):
-#     name: str
-
-# class Contact(BaseModel):
-#     profile: Profile
-#     wa_id: str
-
-# class Metadata(BaseModel):
-#     display_phone_number: str
-#     phone_number_id: str
-
-# class Value(BaseModel):
-#     messaging_product: str
-#     metadata: Metadata
-#     contacts: List[Contact]
-#     messages: List[Message]
-
-# class Change(BaseModel):
-#     value: Value
-#     field: str
-
-# class Entry(BaseModel):
-#     id: str
-#     changes: List[Change]
-
-# class WhatsAppWebhookBody(BaseModel):
-#     object: str
-#     entry: List[Entry]
-
-
-
-
 class TeamCreateRequest(BaseModel):
     name: str
     whatsapp_number: str
@@ -166,21 +119,13 @@ class InitQuestionnaireRequest(BaseModel):
 
 #POSTGRES DB MODELS
 
-from sqlalchemy import create_engine, MetaData, Table, inspect
 from sqlalchemy.orm import declarative_base, sessionmaker, Session, relationship
 from sqlalchemy import Column, Integer, BigInteger, String, ForeignKey, Text, TIMESTAMP
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql import func
 
 
-DATABASE_URL = os.environ.get('DATABASE_URL')  # Ensure this environment variable is correctly set
-engine = create_engine(DATABASE_URL, echo=True)
 
-# Create a base class for declarative models
-Base = declarative_base()
-
-# Set up a session maker
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 # Team model
@@ -284,49 +229,4 @@ class Conversation(Base):
     chat_logs = relationship("ChatLogMessage", back_populates="conversation")
     patient = relationship("Patient", back_populates="conversations")
 
-SessionLocal = sessionmaker(bind=engine)
 
-def get_table_info(db: Session) -> List[Dict[str, Any]]:
-    # Use SQLAlchemy's Inspector to fetch information directly from the database
-    inspector = inspect(db.bind)
-    
-    # Get a list of all table names in the database
-    table_names = inspector.get_table_names()
-    
-    table_info = []
-
-    # Loop through each table in the database
-    for table_name in table_names:
-        table_details = {
-            "table_name": table_name,
-            "columns": []
-        }
-        
-        # Get column information for each table
-        columns = inspector.get_columns(table_name)
-        for column in columns:
-            column_info = {
-                "name": column['name'],
-                "type": str(column['type']),
-                "nullable": column['nullable'],  # Whether the column can contain NULL values
-                "default": column.get('default'),  # The default value (if any)
-                "autoincrement": column.get('autoincrement', False),  # Auto-increment
-                "primary_key": column.get('primary_key', False),  # Primary key
-            }
-            
-            # Check for foreign key relationships
-            foreign_keys = inspector.get_foreign_keys(table_name)
-            column_info["foreign_key"] = None
-            for fk in foreign_keys:
-                for fk_column in fk['constrained_columns']:
-                    if fk_column == column['name']:
-                        column_info["foreign_key"] = {
-                            "referred_table": fk['referred_table'],
-                            "referred_column": fk['referred_columns'][0]
-                        }
-
-            table_details["columns"].append(column_info)
-        
-        table_info.append(table_details)
-    
-    return table_info
