@@ -204,7 +204,7 @@ def range_check_response(answer: str, questionnaire: Questionnaire):
         if start <= answer <= end:
             return "Valid"
         else:
-            return f"{answer_scheme['explanation']}. \n\n You can respond with 'skip' to skip the question or 'end' if you'd like to end the questionnaire early."
+            return f"{answer_scheme['explanation']}\n You can respond with 'skip' to skip the question or 'end' if you'd like to end the questionnaire early."
     return "Valid"
 
 async def ask_question(questionnaire: Questionnaire, conversation_id: int, patient_id: int, db: Session):
@@ -245,23 +245,23 @@ async def answer_question(answer: str, conversation: Conversation, questionnaire
         await ask_question(questionnaire, conversation.id, questionnaire.patient_id, db)
 
 
-def finish_questionnaire(conversation: Conversation, questionnaire: Questionnaire, message_id: str, db: Session):
+async def finish_questionnaire(conversation: Conversation, questionnaire: Questionnaire, message_id: str, db: Session):
     conversation.status = "ReadyToComplete"
     conversation.ended_at = datetime.now(timezone.utc)
     questionnaire.current_status = "Completed"
     db.commit()
-    send_whatsapp_message(questionnaire.patient_id,
+    await send_whatsapp_message(questionnaire.patient_id,
                            conversation.id,
                            "Thank you for completing the questionnaire. We'll send your clinician a summary of your responses. If you have anything else you want to say about how you're in the meantime, you can respond here. \n\n Take care!",
                            db,
                            message_id)
 
-def cancel_questionnaire(conversation: Conversation, questionnaire: Questionnaire, message_id: str, db: Session):
+async def cancel_questionnaire(conversation: Conversation, questionnaire: Questionnaire, message_id: str, db: Session):
     conversation.status = "ReadyToComplete"
     conversation.ended_at = datetime.now(timezone.utc)
     questionnaire.current_status = "Cancelled"
     db.commit()
-    send_whatsapp_message(questionnaire.patient_id,
+    await send_whatsapp_message(questionnaire.patient_id,
                            conversation.id,
                            "Got you, we'll stop here. \n\n We'll send your clinician a summary of your responses so far. If you have any feedback in the meantime, you can send a message or a voice note here. \n\n Take care!",
                            db,
@@ -402,11 +402,12 @@ async def react_to_message(patient_id: int, message_id: str, emoji: str, db: Ses
     try:
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"https://graph.facebook.com/v18.0/{business_phone_number_id}/messages",
+                f"https://graph.facebook.com/v20.0/{business_phone_number_id}/messages",
                 headers={"Authorization": f"Bearer {WHATSAPP_GRAPH_API_TOKEN}"},
                 json={
                     "messaging_product": "whatsapp",
                     "recipient_type": "individual",
+                    "to": patient.phone_number,
                     "type": "reaction",
                     "reaction": {
                         "message_id": message_id,
