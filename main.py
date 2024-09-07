@@ -117,7 +117,7 @@ async def handle_incoming_message(patient_id: int, message_text: str, message_id
     if conversation:
         log_chat_message(conversation.id, patient_id, message_text, "user", db)
         questionnaire = db.query(Questionnaire).filter(Questionnaire.patient_id == patient_id).order_by(Questionnaire.created_at.desc()).first()
-        parsed_response = parse_message_text(message_text, conversation, db)
+        parsed_response = await parse_message_text(message_text)
         if not parsed_response:
             ask_for_clarication(patient_id, conversation.id, db, questionnaire)
             return
@@ -414,7 +414,7 @@ async def process_audio_message(message: Message):
         return None
     
 
-def parse_message_text(message_text: str) -> str | None:
+async def parse_message_text(message_text: str) -> str | None:
     message_text = message_text.lower().strip()
     
     if message_text in ["end", "skip"]:
