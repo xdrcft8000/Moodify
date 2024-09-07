@@ -60,12 +60,12 @@ async def whatsapp_notify_webhook(request: WebhookRequest, db: Session = Depends
                     if message.type == 'text':
                         print(f"Text message: {message.text['body']}")
                         message_text = message.text['body']
-                        handle_incoming_message(patient.id, message_text, message.id, db)
+                        await handle_incoming_message(patient.id, message_text, message.id, db)
 
                     elif message.type == 'audio':
                         print(f"Audio message: {message.audio}")
                         message_text = await process_audio_message(message)
-                        handle_incoming_message(patient.id, message_text, message.id, db)
+                        await handle_incoming_message(patient.id, message_text, message.id, db)
 
                     elif message.type == 'button':
                         print(f"Button pressed: {message.button['payload']}")
@@ -92,7 +92,7 @@ async def whatsapp_notify_webhook(request: WebhookRequest, db: Session = Depends
 def get_patient_from_phone_number(phone_number: str, db: Session):
     return db.query(Patient).filter(Patient.phone_number == phone_number).first()
 
-def handle_incoming_message(patient_id: int, message_text: str, message_id: str, db: Session):
+async def handle_incoming_message(patient_id: int, message_text: str, message_id: str, db: Session):
     
     conversation = db.query(Conversation).filter(
         Conversation.patient_id == patient_id,
@@ -126,7 +126,7 @@ def handle_incoming_message(patient_id: int, message_text: str, message_id: str,
         if parsed_response == "end":
             cancel_questionnaire(conversation, questionnaire, message_id, db)
         else:
-            answer_question(parsed_response, conversation, questionnaire, message_id, db, skipped)
+            await answer_question(parsed_response, conversation, questionnaire, message_id, db, skipped)
 
     elif conversation_awaiting_feedback:
         # Save the message as a comment
