@@ -141,7 +141,7 @@ async def handle_incoming_message(patient_id: int, message_text: str, message_id
         if "comments" not in questionnaire.questions:
             questionnaire.questions["comments"] = []
         questionnaire.questions["comments"].append(message_text)
-        send_whatsapp_message(patient_id, conversation_awaiting_feedback.id, "Thank you for sharing, your message has been saved for your clinician to review.", db)
+        await send_whatsapp_message(patient_id, conversation_awaiting_feedback.id, "Thank you for sharing, your message has been saved for your clinician to review.", db)
         db.commit()
 
 
@@ -222,7 +222,7 @@ async def ask_question(questionnaire: Questionnaire, conversation_id: int, patie
             break
     explanation = questionnaire.questions["answer_schemes"][answer_scheme]["explanation"]
     print(f"Explanation: {explanation}")
-    question_text = f"Question {current_question_index + 1}: {question_text}\n\n{explanation}"
+    question_text = f"*Question {current_question_index + 1} out of {len(questions)}* \n{question_text}\n\n{explanation}"
     print(f"Question text: {question_text}")
     await send_whatsapp_message(patient_id, conversation_id, question_text, db)
 
@@ -237,8 +237,10 @@ async def answer_question(answer: str, conversation: Conversation, questionnaire
             question["answer"] = answer
             break
     db.commit()
+    print(f"Current index: {current_index}")
+    print(f"Questions list length: {len(questionnaire.questions['questions_list'])}")
     if current_index == len(questionnaire.questions["questions_list"]) - 1:
-        await finish_questionnaire(conversation, questionnaire, message_id, db)
+        await finish_questionnaire(conversation, questionnaire, db)
     else:
         questionnaire.current_status = str(current_index + 1)
         db.commit()
@@ -252,7 +254,7 @@ async def finish_questionnaire(conversation: Conversation, questionnaire: Questi
     db.commit()
     await send_whatsapp_message(questionnaire.patient_id,
                            conversation.id,
-                           "Thank you for completing the questionnaire. We'll send your clinician a summary of your responses. If you have anything else you want to say about how you're in the meantime, you can respond here. \n\n Take care!",
+                           "*Thank you for completing the questionnaire!*🎉  \n We'll send your clinician a summary of your responses. If you have anything else you want to say about how you're in the meantime, you can respond here. \n\n Take care!",
                            db)
 
 async def cancel_questionnaire(conversation: Conversation, questionnaire: Questionnaire, message_id: str, db: Session):
