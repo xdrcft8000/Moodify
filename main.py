@@ -231,9 +231,9 @@ async def ask_question(questionnaire: Questionnaire, conversation_id: int, patie
             print(f"Answer scheme: {answer_scheme}")
             break
     if current_question_index == 0:
-        explanation = f"\n\n{questionnaire.questions["answer_schemes"][answer_scheme]["explanation"]}"
+        explanation = f"\n\n{questionnaire.questions['answer_schemes'][answer_scheme]['explanation']}"
     else:
-        explanation = ""
+        explanation = ""    
     print(f"Explanation: {explanation}")
     question_text = f"*Question {current_question_index + 1} out of {len(questions)}* \n\n{question_text}{explanation}"
     print(f"Question text: {question_text}")
@@ -576,27 +576,6 @@ async def init_questionnaire(request: InitQuestionnaireRequest, db: Session = De
         return {"status": "error", "message": str(e)}
 
 
-
-
-def start_questionnaire(patient_id: int, user_id: int, template_id: int, db: Session):
-
-    try:
-        user = db.query(User).filter(User.id == user_id).first()
-        if not user:
-            return {"status": "error", "message": "User not found"}
-
-        team = db.query(Team).filter(Team.id == user.team_id).first()
-        if not team:
-            return {"status": "error", "message": "Team not found"}
-
-        patient = db.query(Patient).filter(Patient.id == patient_id).first()
-        if not patient:
-            return {"status": "error", "message": "Patient not found"}
-
-
-        return {"status": "success", "user": user, "team": team, "patient": patient}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
 
 
 def questionnaire_get_current_question(questionnaire: Questionnaire):
