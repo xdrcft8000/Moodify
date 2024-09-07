@@ -127,6 +127,7 @@ async def handle_incoming_message(patient_id: int, message_text: str, message_id
             print("parsed_response is None")
             await ask_for_clarication(patient_id, conversation.id, db, questionnaire)
             return
+        print('if parsed response is None this shouldnt happen')
         validation_response = range_check_response(parsed_response, questionnaire)
         print(f"Validation response: {validation_response}")
         if validation_response != "Valid":
@@ -186,9 +187,12 @@ async def handle_begin_button(patient_id: int, db: Session):
 
 
 async def ask_for_clarication(patient_id: int, conversation_id: int, db: Session, questionnaire: Questionnaire):
-    help_text = questionnaire.questions["answer_schemes"][questionnaire.current_status]["explanation"]
-    help_text = f"I didn't understand that. {help_text} \n\nYou can respond with 'skip' to skip the question or 'end' if you'd like to end the questionnaire early."
+    question = questionnaire_get_current_question(questionnaire)
+    answer_scheme = question["response_format"]
+    explanation = questionnaire.questions["answer_schemes"][answer_scheme]["explanation"]
+    help_text = f"I didn't understand that. {explanation} \n\nYou can respond with 'skip' to skip the question or 'end' if you'd like to end the questionnaire early."
     await send_whatsapp_message(patient_id, conversation_id, help_text, db)
+
 
 def range_check_response(answer: str, questionnaire: Questionnaire):
     print(f"Range checking response: {answer}")
@@ -226,9 +230,12 @@ async def ask_question(questionnaire: Questionnaire, conversation_id: int, patie
             answer_scheme = question["response_format"]
             print(f"Answer scheme: {answer_scheme}")
             break
-    explanation = questionnaire.questions["answer_schemes"][answer_scheme]["explanation"]
+    if current_question_index == 0:
+        explanation = f"\n\n{questionnaire.questions["answer_schemes"][answer_scheme]["explanation"]}"
+    else:
+        explanation = ""
     print(f"Explanation: {explanation}")
-    question_text = f"*Question {current_question_index + 1} out of {len(questions)}* \n{question_text}\n\n{explanation}"
+    question_text = f"*Question {current_question_index + 1} out of {len(questions)}* \n\n{question_text}{explanation}"
     print(f"Question text: {question_text}")
     await send_whatsapp_message(patient_id, conversation_id, question_text, db)
 
@@ -592,71 +599,13 @@ def start_questionnaire(patient_id: int, user_id: int, template_id: int, db: Ses
         return {"status": "error", "message": str(e)}
 
 
-# +++++++++++++++++++++++++++++++
-# ++++++++++ OPENAI +++++++++++++
-# +++++++++++++++++++++++++++++++
-
-
-
-async def flowise_chatGPT(prompt: str) -> dict:
-    prompt = {"question": prompt}
-    try:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                "https://whatsappai-f2f3.onrender.com/api/v1/prediction/17bbeae4-f50b-43ca-8eb0-2aeea69d5359",
-                json=prompt,
-                headers={"Content-Type": "application/json"},
-            )
-            response.raise_for_status()
-            return response.json()
-    except httpx.HTTPStatusError as e:
-        print(f"Prediction service returned an error: {e.response.status_code}")
-        raise
-    except httpx.RequestError as e:
-        print(f"An error occurred while requesting the prediction service: {str(e)}")
-        raise
-
-
-# Send to OpenAI's API
-async def transcribe_audio(ogg_bytes: bytes) -> str:
-    print('Transcribing audio')
-
-    try:
-        url = "https://api.openai.com/v1/audio/transcriptions"
-
-        # Create a BytesIO object from the binary data
-        ogg_file = io.BytesIO(ogg_bytes)
-
-        # Construct the multipart/form-data payload
-        files = {
-            'file': ('audio.ogg', ogg_file, 'audio/ogg')
-        }
-        data = {
-            'model': 'whisper-1'
-        }
-        headers = {
-            'Authorization': f'Bearer {OPENAI_KEY}'
-        }
-
-        # Make the request using httpx.AsyncClient
-        async with httpx.AsyncClient() as client:
-            response = await client.post(url, files=files, data=data, headers=headers)
-
-        # Check for a successful response
-        response.raise_for_status()
-
-        transcription_result = response.json()
-        return transcription_result.get('text')
-
-    except httpx.RequestError as e:
-        print(f"An error occurred while requesting {e.request.url!r}: {str(e)}")
-        return None
-    except httpx.HTTPStatusError as e:
-        print(f"Error response {e.response.status_code} while requesting {e.request.url!r}: {str(e)}")
-        return None
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
-        return None
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
-        return None
+def questionnaire_get_current_question(questionnaire: Questionnaire):
+    current_index = int(questionnaire.current_status)
+    questions = questionnaire.questions["questions_list"]
+    
+    for question in questions:
+        if question["index"] == current_index:
+            return question
+    
+    return None  # Return None if no matching question is found
+    
