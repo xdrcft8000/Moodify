@@ -72,7 +72,7 @@ async def whatsapp_notify_webhook(request: WebhookRequest, db: Session = Depends
                         message_text = "Thank you for pressing a button"
                         if message.button['payload'] == 'Begin':
                             message_text = "Let's start the questionnaire"
-                            handle_begin_button(patient.id, db)
+                            await handle_begin_button(patient.id, db)
 
                     business_phone_number_id = value.metadata.phone_number_id
                     message_id = message.id
@@ -150,7 +150,7 @@ def handle_incoming_message(patient_id: int, message_text: str, message_id: str,
         send_whatsapp_message(patient_id, "We have no record of you as a patient. Please contact your mental health care provider to get started.", db)
 
 
-def handle_begin_button(patient_id: int, db: Session):
+async def handle_begin_button(patient_id: int, db: Session):
 
     # Get the most recent conversation with status "Initiated"
     conversation = db.query(Conversation).filter(
@@ -166,7 +166,7 @@ def handle_begin_button(patient_id: int, db: Session):
     if questionnaire:
         # Update the conversation status to "QuestionnaireInProgress"
         conversation.status = "QuestionnaireInProgress"
-        ask_question(questionnaire, conversation.id, patient_id, db)
+        await ask_question(questionnaire, conversation.id, patient_id, db)
         db.commit()
         print("Questionnaire inprogress")
     else:
@@ -178,7 +178,7 @@ def ask_for_clarication(patient_id: int, conversation_id: int, db: Session, ques
     help_text = f"I didn't understand that. {help_text} \n\n You can respond with 'skip' to skip the question or 'end' if you'd like to end the questionnaire early."
     send_whatsapp_message(patient_id, conversation_id, help_text, db)
 
-def ask_question(questionnaire: Questionnaire, conversation_id: int, patient_id: int, db: Session):
+async def ask_question(questionnaire: Questionnaire, conversation_id: int, patient_id: int, db: Session):
     current_question_index = int(questionnaire.current_status)
     print(f"Asking question: {current_question_index}")
     questions = questionnaire.questions["questions_list"]
@@ -195,11 +195,11 @@ def ask_question(questionnaire: Questionnaire, conversation_id: int, patient_id:
     print(f"Explanation: {explanation}")
     question_text = f"Question {current_question_index + 1}: {question_text}\n\n{explanation}"
     print(f"Question text: {question_text}")
-    send_whatsapp_message(questionnaire.patient_id, conversation_id, question_text, db)
+    await send_whatsapp_message(patient_id, conversation_id, question_text, db)
 
 
 
-def answer_question(answer: str, conversation: Conversation, questionnaire: Questionnaire, message_id: str, db: Session, skipped = False):
+async def answer_question(answer: str, conversation: Conversation, questionnaire: Questionnaire, message_id: str, db: Session, skipped = False):
     emoji = "⏭️" if skipped else "👍"
     react_to_message(questionnaire.patient_id, message_id, emoji)
     current_index = int(questionnaire.current_status)
@@ -213,7 +213,7 @@ def answer_question(answer: str, conversation: Conversation, questionnaire: Ques
     else:
         questionnaire.current_status = str(current_index + 1)
         db.commit()
-        ask_question(questionnaire, conversation.id, questionnaire.patient_id, db)
+        await ask_question(questionnaire, conversation.id, questionnaire.patient_id, db)
 
 
 def finish_questionnaire(conversation: Conversation, questionnaire: Questionnaire, message_id: str, db: Session):
