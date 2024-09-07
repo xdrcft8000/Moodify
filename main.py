@@ -245,7 +245,7 @@ async def answer_question(answer: str, conversation: Conversation, questionnaire
         await ask_question(questionnaire, conversation.id, questionnaire.patient_id, db)
 
 
-async def finish_questionnaire(conversation: Conversation, questionnaire: Questionnaire, message_id: str, db: Session):
+async def finish_questionnaire(conversation: Conversation, questionnaire: Questionnaire, db: Session):
     conversation.status = "ReadyToComplete"
     conversation.ended_at = datetime.now(timezone.utc)
     questionnaire.current_status = "Completed"
@@ -253,8 +253,7 @@ async def finish_questionnaire(conversation: Conversation, questionnaire: Questi
     await send_whatsapp_message(questionnaire.patient_id,
                            conversation.id,
                            "Thank you for completing the questionnaire. We'll send your clinician a summary of your responses. If you have anything else you want to say about how you're in the meantime, you can respond here. \n\n Take care!",
-                           db,
-                           message_id)
+                           db)
 
 async def cancel_questionnaire(conversation: Conversation, questionnaire: Questionnaire, message_id: str, db: Session):
     conversation.status = "ReadyToComplete"
@@ -439,7 +438,7 @@ async def process_audio_message(message: Message):
                 audio_data['url'],
                 headers={"Authorization": f"Bearer {WHATSAPP_GRAPH_API_TOKEN}"},)
             text = await transcribe_audio(audio_binary_data.content)
-
+            print(f"Transcription: {text}")
             return text            
 
     except Exception as e:
@@ -480,6 +479,8 @@ async def parse_message_text(message_text: str) -> str | None:
         )
         interpreted_text = response.choices[0].message.content.strip().lower()
         print(interpreted_text)
+        if interpreted_text == 0 or "0":
+            return "0"
         if interpreted_text.isdigit():
             return int(interpreted_text)
         elif interpreted_text in ["skip", "end"]:
