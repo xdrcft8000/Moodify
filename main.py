@@ -224,7 +224,7 @@ async def ask_question(questionnaire: Questionnaire, conversation_id: int, patie
 
 async def answer_question(answer: str, conversation: Conversation, questionnaire: Questionnaire, message_id: str, db: Session, skipped = False):
     emoji = "⏭️" if skipped else "👍"
-    react_to_message(questionnaire.patient_id, message_id, emoji)
+    react_to_message(questionnaire.patient_id, message_id, emoji, db)
     current_index = int(questionnaire.current_status)
     for question in questionnaire.questions["questions_list"]:
         if question["index"] == current_index:
@@ -389,7 +389,10 @@ async def mark_message_as_read(business_phone_number_id: str, message_id):
         raise
 
 
-async def react_to_message(business_phone_number_id: str, message_id: str, emoji: str):
+async def react_to_message(patient_id: int, message_id: str, emoji: str, db: Session):
+    patient, user, team = get_patient_relations(patient_id, db)
+    business_phone_number_id = team.whatsapp_number_id
+
     try:
         async with httpx.AsyncClient() as client:
             response = await client.post(
