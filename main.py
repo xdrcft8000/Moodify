@@ -191,13 +191,14 @@ async def range_check_response(answer: str, questionnaire: Questionnaire):
         if question["index"] == current_index:
             response_format = question["response_format"]
             break
-    if range in questions["answer_schemes"][response_format]:
-        start = questions["answer_schemes"][response_format]["range"]["start"]
-        end = questions["answer_schemes"][response_format]["range"]["end"]
+    answer_scheme = questionnaire.questions["answer_schemes"][response_format]
+    if range in answer_scheme:
+        start = answer_scheme["range"]["start"]
+        end = answer_scheme["range"]["end"]
         if start <= answer <= end:
             return "Valid"
         else:
-            return f"{questions['answer_schemes'][response_format]['explanation']}. \n\n You can respond with 'skip' to skip the question or 'end' if you'd like to end the questionnaire early."
+            return f"{answer_scheme['explanation']}. \n\n You can respond with 'skip' to skip the question or 'end' if you'd like to end the questionnaire early."
     return "Valid"
 
 async def ask_question(questionnaire: Questionnaire, conversation_id: int, patient_id: int, db: Session):
