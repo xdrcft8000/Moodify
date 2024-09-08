@@ -72,32 +72,48 @@
                             }
                         },
                         tooltip: {
+                            backgroundColor: 'white', // Customize this color as needed
+                            titleColor: 'black',
+                            bodyColor: 'black',
+                            borderColor: 'black',
+                            borderWidth: 1,
+                            padding: 10,
+                            bodyFont:{
+                                size: 16,
+                            },
+                            usePointStyle: true,
                             callbacks: {
-                    label: (context) => {
-                        const score = context.raw as number;
-                        return `Score: ${score}`;
-                    },
-                    afterLabel: (context) => {
-                    const dataIndex = context.dataIndex;
-                    const comments = completedQuestionnaires[dataIndex].comments;
-                    if (comments.length === 0) return [];
+                                labelPointStyle: (context) => {
+                                    return {
+                                        pointStyle: false,
+                                        rotation: 0,
+                                    };
+                                },
+                                label: (context) => {
+                                    const score = context.raw as number;
+                                    return `Score: ${score}`;
+                                },
+                                afterLabel: (context) => {
+                                    const dataIndex = context.dataIndex;
+                                    const comments = completedQuestionnaires[dataIndex].comments;
+                                    if (comments.length === 0) return [];
 
-                    const chunkComment = (comment: string, chunkSize: number = 5) => {
-                        const words = comment.split(' ');
-                        const chunks = [];
-                        for (let i = 0; i < words.length; i += chunkSize) {
-                            chunks.push(words.slice(i, i + chunkSize).join(' '));
-                        }
-                        return chunks;
-                    };
+                                    const chunkComment = (comment: string, chunkSize: number = 5) => {
+                                        const words = comment.split(' ');
+                                        const chunks = [];
+                                        for (let i = 0; i < words.length; i += chunkSize) {
+                                            chunks.push(words.slice(i, i + chunkSize).join(' '));
+                                        }
+                                        return chunks;
+                                    };
 
-                    const chunkedComments = comments.flatMap(comment => 
-                        chunkComment(comment).map(chunk => `  ${chunk}`)
-                    );
+                                        const chunkedComments = comments.flatMap(comment => 
+                                            chunkComment(`"${comment}"`).map(chunk => `  ${chunk}`)
+                                        );
 
-                    return ['Comments:'].concat(chunkedComments);
-                }
-                                }       
+                                            return ['Comments:'].concat(chunkedComments);
+                                    }
+                                    },       
                         }
                     }
                 }
