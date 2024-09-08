@@ -12,18 +12,16 @@ trap cleanup EXIT
 
 # Start the FastAPI backend
 echo "Starting FastAPI backend..."
-uvicorn main:app --reload &
+uvicorn main:app --host 0.0.0.0 --port 8000 &
 
 # Wait a bit to ensure the backend has started
-echo "Waiting..."
-sleep 1
-echo "Waiting..."
-sleep 1
+echo "Waiting for backend to start..."
+sleep 5
 
 # Start the SvelteKit frontend
 echo "Starting SvelteKit frontend..."
 cd frontend
-npm run dev &
+node build &
 
 # Wait for all background processes to finish
 wait
