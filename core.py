@@ -10,6 +10,7 @@ if os.environ.get('ENVIRONMENT') != 'production':
     from dotenv import load_dotenv
     load_dotenv()
 
+FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
 
 app = FastAPI()
 
