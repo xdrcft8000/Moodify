@@ -5,6 +5,7 @@ FROM node:18-slim
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
+    python3-venv \
     build-essential \
     ffmpeg \
     && apt-get clean
@@ -13,6 +14,10 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Copy the backend requirements file and install Python dependencies
+COPY requirements.txt /app/
+RUN python3 -m venv /app/venv
+ENV PATH="/app/venv/bin:$PATH"
+
 COPY requirements.txt /app/
 RUN pip3 install --no-cache-dir -r requirements.txt
 
