@@ -1,35 +1,43 @@
-# Use an official Python runtime as a parent image
-FROM python:3.11-slim
+# Use an official Node.js runtime as a parent image
+FROM node:18-slim
 
-# Set the working directory in the container
-WORKDIR /app
-
-# Install system dependencies (if any, e.g., build-essential for some packages)
+# Install Python and other dependencies
 RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
     build-essential \
     ffmpeg \
     && apt-get clean
 
-# Upgrade pip and setuptools to avoid potential issues with packages
-RUN pip install --upgrade pip setuptools
+# Set the working directory in the container
+WORKDIR /app
 
-# Copy the requirements file from the root directory of your project to the working directory in the container
-COPY requirements.txt /app/requirements.txt
+# Copy the backend requirements file and install Python dependencies
+COPY requirements.txt /app/
+RUN pip3 install --no-cache-dir -r requirements.txt
 
-# Create a virtual environment
-RUN python -m venv /app/venv
+# Copy the frontend package.json and package-lock.json
+COPY frontend/package*.json /app/frontend/
 
-# Activate the virtual environment and install dependencies
-RUN /bin/bash -c "source /app/venv/bin/activate && pip install --no-cache-dir -r /app/requirements.txt"
+# Install frontend dependencies
+WORKDIR /app/frontend
+RUN npm ci
 
-# Copy the rest of the application code to the working directory
+# Copy the rest of the application code
 COPY . /app
 
-# Set environment variables to use the virtual environment by default
-ENV PATH="/app/venv/bin:$PATH"
+# Build the frontend
+RUN npm run build
 
-# Expose the application port
-EXPOSE 8000
+# Set the working directory back to the root
+WORKDIR /app
 
-# Command to run the FastAPI application using Uvicorn
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Expose the application ports
+EXPOSE 8000 5173
+
+# Copy the start script
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh
+
+# Command to run both backend and frontend
+CMD ["/app/start.sh"]

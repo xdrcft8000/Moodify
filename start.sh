@@ -15,7 +15,10 @@ echo "Starting FastAPI backend..."
 uvicorn main:app --reload &
 
 # Wait a bit to ensure the backend has started
-sleep 5
+echo "Waiting..."
+sleep 1
+echo "Waiting..."
+sleep 1
 
 # Start the SvelteKit frontend
 echo "Starting SvelteKit frontend..."

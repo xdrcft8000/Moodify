@@ -1,0 +1,177 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    html {
+      @apply text-secondary dark:text-secondary-dark;
+    }
+  }
+/* Helvetica Neue */
+@font-face {
+    font-family: 'Helvetica Neue';
+    src: url('/fonts/HelveticaNeueRoman.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+  }
+  
+  @font-face {
+    font-family: 'Helvetica Neue';
+    src: url('/fonts/HelveticaNeueItalic.ttf') format('truetype');
+    font-weight: normal;
+    font-style: italic;
+  }
+  
+  @font-face {
+    font-family: 'Helvetica Neue';
+    src: url('/fonts/HelveticaNeueBold.otf') format('opentype');
+    font-weight: bold;
+    font-style: normal;
+  }
+  
+  @font-face {
+    font-family: 'Helvetica Neue';
+    src: url('/fonts/HelveticaNeueBoldItalic.otf') format('opentype');
+    font-weight: bold;
+    font-style: italic;
+  }
+  
+  @font-face {
+    font-family: 'Helvetica Neue';
+    src: url('/fonts/HelveticaNeueLight.otf') format('opentype');
+    font-weight: 300;
+    font-style: normal;
+  }
+  
+  @font-face {
+    font-family: 'Helvetica Neue';
+    src: url('/fonts/HelveticaNeueLightItalic.otf') format('opentype');
+    font-weight: 300;
+    font-style: italic;
+  }
+  
+  @font-face {
+    font-family: 'Helvetica Neue';
+    src: url('/fonts/HelveticaNeueMedium.otf') format('opentype');
+    font-weight: 500;
+    font-style: normal;
+  }
+  
+  @font-face {
+    font-family: 'Helvetica Neue';
+    src: url('/fonts/HelveticaNeueMediumItalic.otf') format('opentype');
+    font-weight: 500;
+    font-style: italic;
+  }
+  
+  @font-face {
+    font-family: 'Helvetica Neue';
+    src: url('/fonts/HelveticaNeueHeavy.otf') format('opentype');
+    font-weight: 700;
+    font-style: normal;
+  }
+  
+  @font-face {
+    font-family: 'Helvetica Neue';
+    src: url('/fonts/HelveticaNeueHeavyItalic.otf') format('opentype');
+    font-weight: 700;
+    font-style: italic;
+  }
+  
+  @font-face {
+    font-family: 'Helvetica Neue';
+    src: url('/fonts/HelveticaNeueBlack.otf') format('opentype');
+    font-weight: 900;
+    font-style: normal;
+  }
+  
+  @font-face {
+    font-family: 'Helvetica Neue';
+    src: url('/fonts/HelveticaNeueBlackItalic.otf') format('opentype');
+    font-weight: 900;
+    font-style: italic;
+  }
+  
+  @font-face {
+    font-family: 'Helvetica Neue';
+    src: url('/fonts/HelveticaNeueThin.otf') format('opentype');
+    font-weight: 100;
+    font-style: normal;
+  }
+  
+  @font-face {
+    font-family: 'Helvetica Neue';
+    src: url('/fonts/HelveticaNeueThinItalic.otf') format('opentype');
+    font-weight: 100;
+    font-style: italic;
+  }
+  
+  @font-face {
+    font-family: 'Helvetica Neue';
+    src: url('/fonts/HelveticaNeueUltraLight.otf') format('opentype');
+    font-weight: 200;
+    font-style: normal;
+  }
+  
+  @font-face {
+    font-family: 'Helvetica Neue';
+    src: url('/fonts/HelveticaNeueUltraLightItalic.otf') format('opentype');
+    font-weight: 200;
+    font-style: italic;
+  }
+  
+  /* Inria Serif */
+  @font-face {
+    font-family: 'Inria Serif';
+    src: url('/fonts/InriaSerif-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+  }
+  
+  @font-face {
+    font-family: 'Inria Serif';
+    src: url('/fonts/InriaSerif-Italic.ttf') format('truetype');
+    font-weight: normal;
+    font-style: italic;
+  }
+  
+  @font-face {
+    font-family: 'Inria Serif';
+    src: url('/fonts/InriaSerif-Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+  }
+  
+  @font-face {
+    font-family: 'Inria Serif';
+    src: url('/fonts/InriaSerif-BoldItalic.ttf') format('truetype');
+    font-weight: bold;
+    font-style: italic;
+  }
+  
+  @font-face {
+    font-family: 'Inria Serif';
+    src: url('/fonts/InriaSerif-Light.ttf') format('truetype');
+    font-weight: 300;
+    font-style: normal;
+  }
+  
+  @font-face {
+    font-family: 'Inria Serif';
+    src: url('/fonts/InriaSerif-LightItalic.ttf') format('truetype');
+    font-weight: 300;
+    font-style: italic;
+  }
+  
+  /* Seoul Hangang */
+  @font-face {
+    font-family: 'Seoul Hangang';
+    src: url('/fonts/SeoulHangang CM Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+  }
+  
+  /* Default font for the body */
+  body {
+    font-family: 'Helvetica Neue', 'Inria Serif', 'Seoul Hangang', sans-serif;
+  }

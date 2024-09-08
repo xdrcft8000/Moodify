@@ -584,3 +584,23 @@ def questionnaire_get_current_question(questionnaire: Questionnaire):
     
     return None  # Return None if no matching question is found
     
+
+
+
+@app.get("/get_patients")
+async def get_patients(db: Session = Depends(get_db)):
+    patients = db.query(Patient).all()
+    return patients
+
+
+
+@app.get("/get_questionnaires")
+async def get_questionnaires(db: Session = Depends(get_db)):
+    questionnaires = db.query(Questionnaire).all()
+    return questionnaires
+
+
+@app.get("/get_templates")
+async def get_templates(db: Session = Depends(get_db)):
+    templates = db.query(Template).all()
+    return templates
