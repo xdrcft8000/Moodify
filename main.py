@@ -186,7 +186,7 @@ async def ask_for_clarication(patient_id: int, conversation_id: int, questionnai
     question = questionnaire_get_current_question(questionnaire)
     answer_scheme = question["response_format"]
     explanation = questionnaire.questions["answer_schemes"][answer_scheme]["explanation"]
-    help_text = f"I didn't understand that. {explanation} \n\nYou can respond with 'skip' to skip the question or 'end' if you'd like to end the questionnaire early."
+    help_text = f"I didn't understand that. {explanation}\nYou can respond with 'skip' to skip the question or 'end' if you'd like to end the questionnaire early."
     await send_whatsapp_message(patient_id, conversation_id, help_text, db, message_id)
 
 
