@@ -38,7 +38,7 @@ RUN npx svelte-kit sync
 RUN npm run build
 
 # After building the frontend
-RUN ls -la /app/frontend/build
+RUN ls -la /app/frontend
 
 # Set the working directory back to the root
 WORKDIR /app
