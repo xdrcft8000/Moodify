@@ -21,7 +21,7 @@ sleep 5
 # Start the SvelteKit frontend
 echo "Starting SvelteKit frontend..."
 cd frontend
-npm run preview &
+npm run preview -- --host 0.0.0.0 &
 
 # Wait for all background processes to finish
 wait
