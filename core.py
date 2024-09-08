@@ -16,7 +16,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["FRONTEND_URL"],  # Add your SvelteKit dev server URL
+    allow_origins=[FRONTEND_URL],  # Add your SvelteKit dev server URL
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -25,7 +25,7 @@ app.add_middleware(
 
 
 # Database setup
-DATABASE_URL = os.environ.get('DATABASE_URL')  # Ensure this environment variable is correctly set
+DATABASE_URL = os.environ.get('DATABASE_URL')  # Ensure this environment variable is correctly set¬
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
