@@ -19,7 +19,6 @@ ENV PATH="/app/venv/bin:$PATH"
 
 RUN pip3 install --no-cache-dir --upgrade pip setuptools
 
-
 COPY requirements.txt /app/
 RUN pip3 install --no-cache-dir -r requirements.txt --use-pep517
 
@@ -33,11 +32,13 @@ RUN npm ci
 # Copy the rest of the application code
 COPY . /app
 
+# Set up Svelte Kit and build the frontend
 WORKDIR /app/frontend
 RUN npx svelte-kit sync
-
-# Build the frontend
 RUN npm run build
+
+# After building the frontend
+RUN ls -la /app/frontend/build
 
 # Set the working directory back to the root
 WORKDIR /app
