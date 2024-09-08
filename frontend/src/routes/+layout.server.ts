@@ -10,7 +10,7 @@ export const load: LayoutServerLoad = async ({ fetch }) => {
         ]);
 
         if (!patientsRes.ok || !questionnairesRes.ok || !templatesRes.ok) {
-            throw new Error('Failed to fetch data');
+            throw new Error(`${patientsRes.status} ${patientsRes.statusText} ${questionnairesRes.status} ${questionnairesRes.statusText} ${templatesRes.status} ${templatesRes.statusText} `);
         }
 
         const [patientsList, questionnairesList, templatesList] = await Promise.all([
