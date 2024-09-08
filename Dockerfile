@@ -33,6 +33,9 @@ RUN npm ci
 # Copy the rest of the application code
 COPY . /app
 
+WORKDIR /app/frontend
+RUN npx svelte-kit sync
+
 # Build the frontend
 RUN npm run build
 
