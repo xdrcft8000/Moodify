@@ -17,8 +17,6 @@ from db import *
 from models import *
 from utils import *
 from core import *
-# from dotenv import load_dotenv
-# load_dotenv()
 
 
 
@@ -99,7 +97,7 @@ def get_patient_from_phone_number(phone_number: str, db: Session):
 
 async def handle_incoming_message(patient_id: int, message_text: str, message_id: str, db: Session):
     
-    conversation = db.query(Conversation).filter(
+    conversation_in_questionnaire = db.query(Conversation).filter(
         Conversation.patient_id == patient_id,
         Conversation.status == "QuestionnaireInProgress",
         Conversation.ended_at > datetime.now(timezone.utc)
@@ -119,25 +117,23 @@ async def handle_incoming_message(patient_id: int, message_text: str, message_id
     ).order_by(Conversation.created_at.desc()).first()
 
 
-    if conversation:
-        log_chat_message(conversation.id, patient_id, message_text, "user", db)
+    if conversation_in_questionnaire:
+        log_chat_message(conversation_in_questionnaire.id, patient_id, message_text, "user", db)
         questionnaire = db.query(Questionnaire).filter(Questionnaire.patient_id == patient_id).order_by(Questionnaire.created_at.desc()).first()
         parsed_response = await parse_message_text(message_text)
         if parsed_response is None:
-            print("parsed_response is None")
-            await ask_for_clarication(patient_id, conversation.id, questionnaire, message_id, db)
-            return
-        print('if parsed response is None this shouldnt happen')
-        validation_response = range_check_response(parsed_response, questionnaire)
-        print(f"Validation response: {validation_response}")
-        if validation_response != "Valid":
-            await send_whatsapp_message(patient_id, conversation.id, validation_response, db)
+            await ask_for_clarication(patient_id, conversation_in_questionnaire.id, questionnaire, message_id, db)
             return
         skipped = parsed_response == "skip"
         if parsed_response == "end":
-            await cancel_questionnaire(conversation, questionnaire, message_id, db)
+            await cancel_questionnaire(conversation_in_questionnaire, questionnaire, message_id, db)
         else:
-            await answer_question(parsed_response, conversation, questionnaire, message_id, db, skipped)
+            if not skipped:
+                validation_response = range_check_response(parsed_response, questionnaire)
+                if validation_response != "Valid":
+                    await send_whatsapp_message(patient_id, conversation_in_questionnaire.id, validation_response, db)
+                    return
+            await answer_question(parsed_response, conversation_in_questionnaire, questionnaire, message_id, db, skipped)
 
     elif conversation_awaiting_feedback:
         # Save the message as a comment

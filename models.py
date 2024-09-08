@@ -2,8 +2,6 @@ import os
 from pydantic import BaseModel, Field, RootModel, EmailStr, field_validator
 from typing import List, Optional, Dict, Any
 from core import Base
-# from dotenv import load_dotenv
-# load_dotenv()
 
 
 #PYDANTIC REQUEST MODELS
