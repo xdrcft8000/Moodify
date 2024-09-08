@@ -8,6 +8,10 @@
     import { cubicOut } from 'svelte/easing';
     import { writable } from "svelte/store";
     export let data;
+    import "$lib/fa";
+    import { FontAwesomeIcon } from '@fortawesome/svelte-fontawesome';
+    import { faUser } from '@fortawesome/free-solid-svg-icons';
+
     const { patients, questionnaires, templates } = data;
     function toggleTheme() {
         theme.update(currentTheme => currentTheme === 'dark' ? 'light' : 'dark');
@@ -113,8 +117,10 @@
             after:transition-all peer-checked:after:translate-x-full
             dark:peer-checked:bg-violet-500 dark:peer-focus:ring-violet-800">
         </div>        </label>
-        <button on:click={toggleDropdown} class="text-2xl bg-transparent border-none cursor-pointer profile-dropdown">👤</button>
-        {#if isDropdownOpen}
+        <button on:click={toggleDropdown} class="text-2xl bg-transparent border-none cursor-pointer profile-dropdown">
+            <FontAwesomeIcon icon={faUser} />
+        </button>
+                {#if isDropdownOpen}
             <div class="profile-dropdown absolute right-0 top-full mt-2 w-48 bg-primary border border-secondary rounded-md shadow-lg z-10">
                 <a href="/profile" class="block px-4 py-2 hover:bg-brown hover:text-white">Profile</a>
                 <a href="/settings" class="block px-4 py-2 hover:bg-brown hover:text-white">Settings</a>
