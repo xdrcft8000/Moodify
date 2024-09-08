@@ -116,9 +116,9 @@
         <button on:click={toggleDropdown} class="text-2xl bg-transparent border-none cursor-pointer profile-dropdown">👤</button>
         {#if isDropdownOpen}
             <div class="profile-dropdown absolute right-0 top-full mt-2 w-48 bg-primary border border-secondary rounded-md shadow-lg z-10">
-                <a href="/profile" class="block px-4 py-2 hover:bg-violet hover:text-white">Profile</a>
-                <a href="/settings" class="block px-4 py-2 hover:bg-violet hover:text-white">Settings</a>
-                <a href="/logout" class="block px-4 py-2 hover:bg-violet hover:text-white">Logout</a>
+                <a href="/profile" class="block px-4 py-2 hover:bg-brown hover:text-white">Profile</a>
+                <a href="/settings" class="block px-4 py-2 hover:bg-brown hover:text-white">Settings</a>
+                <a href="/logout" class="block px-4 py-2 hover:bg-brown hover:text-white">Logout</a>
             </div>
         {/if}
     </div>

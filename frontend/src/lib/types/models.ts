@@ -57,6 +57,7 @@ export interface Questionnaire {
     user_id: number;
     questions: QuestionnaireResult;
     current_status: string;
+    comments?: string;
     // patient: Patient;
     // template: Template;
     // user: User;
