@@ -7,5 +7,3 @@
     $: template = $appData.templates.find(t => t.id === parseInt(templateId));
 </script>
 
-<h1>{template!.title}</h1>
-
